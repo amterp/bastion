@@ -1,0 +1,11 @@
+{
+  "_v": 1,
+  "id": "a_khQzTYzB",
+  "alias": "phase-7-degradation",
+  "alias_explicit": false,
+  "title": "Phase 7: Degradation Control",
+  "description": "degradation evaluator, content script, dynamic registration, triggers",
+  "creator": "Alexander Terp",
+  "created_at_millis": 1774126233151,
+  "updated_at_millis": 1774126233151
+}

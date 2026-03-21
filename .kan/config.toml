@@ -1,0 +1,9 @@
+kan_schema = "project/1"
+id = "p_khQQL0lu"
+name = "Bastion"
+
+[favicon]
+  background = "#6366f1"
+  icon_type = "letter"
+  letter = "B"
+  emoji = ""
