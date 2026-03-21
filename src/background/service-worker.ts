@@ -8,6 +8,15 @@ import {
 import { hasClearance, addClearance } from '../storage/tracking.js';
 import { SPEED_BUMP_CLEARANCE_TTL_MS } from '../shared/constants.js';
 import type { SiteConfig } from '../shared/types.js';
+import {
+  onTabActivated,
+  onTabRemoved,
+  onWindowFocusChanged,
+  onNavigationCommitted,
+  recoverOrphanedSession,
+} from './time-tracker.js';
+import { setupAlarms, handleAlarm } from './alarm-handler.js';
+import { addNavEntry } from './navigation-handler.js';
 
 // Register all control evaluators
 initControls();
@@ -67,6 +76,40 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   chrome.tabs.update(details.tabId, { url: redirectUrl });
 });
 
+// Record nav events when navigation commits (for nav-frequency tracking)
+chrome.webNavigation.onCommitted.addListener(async (details) => {
+  if (details.frameId !== 0) return;
+  if (details.url.startsWith(chrome.runtime.getURL(''))) return;
+
+  const configs = await getConfigs();
+  await addNavEntry(details.url, configs);
+
+  // Also update time tracking when navigation commits
+  await onNavigationCommitted(details.tabId, details.url, configs, Date.now());
+});
+
+// --- Time tracking events ---
+
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  const configs = await getConfigs();
+  await onTabActivated(activeInfo.tabId, configs, Date.now());
+});
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  await onTabRemoved(tabId, Date.now());
+});
+
+chrome.windows.onFocusChanged.addListener(async (windowId) => {
+  const configs = await getConfigs();
+  await onWindowFocusChanged(windowId, configs, Date.now());
+});
+
+// --- Alarms ---
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  handleAlarm(alarm, getConfigs);
+});
+
 // --- Message handling ---
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -85,7 +128,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // --- Lifecycle ---
 
 chrome.runtime.onInstalled.addListener(() => {
+  setupAlarms();
   console.log('Bastion extension installed');
 });
+
+// On every service worker wake-up, recover any orphaned session
+// and ensure alarms are set up (they may not persist across restarts)
+recoverOrphanedSession(Date.now());
+setupAlarms();
 
 console.log('Bastion service worker initialized');

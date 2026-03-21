@@ -1,6 +1,6 @@
 import type { SiteConfig } from '../shared/types.js';
-import { findMatchingSiteConfig } from '../shared/url-utils.js';
-import { getTrackingData, hasClearance } from '../storage/tracking.js';
+import { extractHostname, findMatchingSiteConfig, findMatchingDomainPattern } from '../shared/url-utils.js';
+import { getTrackingData, updateTrackingData, hasClearance } from '../storage/tracking.js';
 import { evaluateControls } from '../controls/evaluate.js';
 import type { ControlResult } from '../controls/types.js';
 
@@ -22,6 +22,24 @@ export async function handleNavigation(
   if (result.action === 'allow') return null;
 
   return { result, config: siteConfig };
+}
+
+/**
+ * Record a navigation event for nav-frequency tracking.
+ */
+export async function addNavEntry(
+  url: string,
+  configs: SiteConfig[],
+): Promise<void> {
+  const hostname = extractHostname(url);
+  if (!hostname) return;
+
+  const domainPattern = findMatchingDomainPattern(hostname, configs);
+  if (!domainPattern) return;
+
+  const tracking = await getTrackingData(domainPattern);
+  tracking.navEntries.push({ timestamp: Date.now() });
+  await updateTrackingData(domainPattern, tracking);
 }
 
 /**
