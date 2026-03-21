@@ -8,6 +8,9 @@ import {
 import { hasClearance, addClearance } from '../storage/tracking.js';
 import { SPEED_BUMP_CLEARANCE_TTL_MS } from '../shared/constants.js';
 import type { SiteConfig } from '../shared/types.js';
+import { findMatchingSiteConfig, extractHostname } from '../shared/url-utils.js';
+import { getTrackingData } from '../storage/tracking.js';
+import { evaluateControls } from '../controls/evaluate.js';
 import {
   onTabActivated,
   onTabRemoved,
@@ -122,6 +125,27 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }).then(() => sendResponse({ ok: true }));
     return true; // async response
   }
+
+  if (message.type === 'check-degradation' && message.url) {
+    (async () => {
+      const configs = await getConfigs();
+      const siteConfig = findMatchingSiteConfig(message.url, configs);
+      if (!siteConfig) {
+        sendResponse({ degrade: false });
+        return;
+      }
+      const tracking = await getTrackingData(siteConfig.domainPattern);
+      const now = Date.now();
+      const result = evaluateControls(siteConfig, tracking, now);
+      if (result.action === 'degrade') {
+        sendResponse({ degrade: true, effect: result.degradeEffect });
+      } else {
+        sendResponse({ degrade: false });
+      }
+    })();
+    return true; // async response
+  }
+
   return false;
 });
 
