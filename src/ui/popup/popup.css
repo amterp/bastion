@@ -5,31 +5,173 @@
 }
 
 body {
-  width: 320px;
-  min-height: 200px;
+  width: 340px;
+  min-height: 100px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #1a1a2e;
   color: #e0e0e0;
 }
 
 .container {
-  padding: 20px;
+  padding: 16px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
 h1 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #e94560;
-  margin-bottom: 4px;
 }
 
-.tagline {
-  font-size: 13px;
-  color: #888;
-  margin-bottom: 16px;
+.settings-link {
+  color: #666;
+  text-decoration: none;
+  font-size: 18px;
 }
 
-#status {
+.settings-link:hover {
+  color: #e94560;
+}
+
+/* Empty state */
+#empty-state {
+  text-align: center;
+  padding: 20px 0;
+  display: none;
+}
+
+#empty-state p {
+  color: #666;
   font-size: 14px;
+  margin-bottom: 8px;
+}
+
+#empty-state a {
+  color: #e94560;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+#empty-state a:hover {
+  text-decoration: underline;
+}
+
+body.empty #empty-state {
+  display: block;
+}
+
+body.empty #sites-summary {
+  display: none;
+}
+
+/* Site summary cards */
+.site-summary {
+  background: #16213e;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.site-summary.disabled {
+  opacity: 0.5;
+}
+
+.site-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.site-domain {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.site-toggle {
+  position: relative;
+  cursor: pointer;
+}
+
+.site-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.site-toggle .slider {
+  width: 32px;
+  height: 18px;
+  background: #333;
+  border-radius: 9px;
+  position: relative;
+  display: block;
+  transition: background 0.2s;
+}
+
+.site-toggle .slider::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #888;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.site-toggle input:checked + .slider {
+  background: #2d5a3d;
+}
+
+.site-toggle input:checked + .slider::after {
+  transform: translateX(14px);
+  background: #4ade80;
+}
+
+/* Control status pills */
+.controls-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.control-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #2a2a4a;
   color: #aaa;
+}
+
+.control-pill.active {
+  background: #2d3a5a;
+  color: #8ab4f8;
+}
+
+.control-pill.blocked {
+  background: #4a2030;
+  color: #e94560;
+}
+
+.control-pill.bypassed {
+  background: #4a4020;
+  color: #e9a045;
+}
+
+/* Stats row */
+.stats-row {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
 }
