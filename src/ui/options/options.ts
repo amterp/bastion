@@ -75,23 +75,23 @@ function renderControlFields(container: HTMLElement, config: ControlConfig): voi
 
   switch (config.type) {
     case 'time-limit':
-      container.appendChild(fieldRow('Max minutes', 'number', String(config.maxMinutes), (v) => {
-        (config as TimeLimitConfig).maxMinutes = parseInt(v, 10) || 1;
+      container.appendChild(durationRow('Max time', config.maxMinutes, (m) => {
+        (config as TimeLimitConfig).maxMinutes = m;
         scheduleSave();
       }));
-      container.appendChild(fieldRow('Window (minutes)', 'number', String(config.windowMinutes), (v) => {
-        (config as TimeLimitConfig).windowMinutes = parseInt(v, 10) || 1;
+      container.appendChild(durationRow('Per window', config.windowMinutes, (m) => {
+        (config as TimeLimitConfig).windowMinutes = m;
         scheduleSave();
       }));
       break;
 
     case 'nav-frequency':
-      container.appendChild(fieldRow('Max navigations', 'number', String(config.maxNavigations), (v) => {
+      container.appendChild(fieldRow('Max visits', 'number', String(config.maxNavigations), (v) => {
         (config as NavFrequencyConfig).maxNavigations = parseInt(v, 10) || 1;
         scheduleSave();
       }));
-      container.appendChild(fieldRow('Window (minutes)', 'number', String(config.windowMinutes), (v) => {
-        (config as NavFrequencyConfig).windowMinutes = parseInt(v, 10) || 1;
+      container.appendChild(durationRow('Per window', config.windowMinutes, (m) => {
+        (config as NavFrequencyConfig).windowMinutes = m;
         scheduleSave();
       }));
       break;
@@ -123,8 +123,8 @@ function renderControlFields(container: HTMLElement, config: ControlConfig): voi
             scheduleSave();
           }));
         } else {
-          detailContainer.appendChild(fieldRow('After minutes on site', 'number', String(dc.trigger.afterMinutes), (v) => {
-            dc.trigger = { type: 'time-on-site', afterMinutes: parseInt(v, 10) || 1 };
+          detailContainer.appendChild(durationRow('After on site', dc.trigger.afterMinutes, (m) => {
+            dc.trigger = { type: 'time-on-site', afterMinutes: m };
             scheduleSave();
           }));
         }
@@ -167,10 +167,70 @@ function fieldRow(
   const input = document.createElement('input');
   input.type = type;
   input.value = value;
-  if (type === 'number') input.min = '1';
+  if (type === 'number') input.min = '0';
   input.addEventListener('input', () => onChange(input.value));
   row.appendChild(lbl);
   row.appendChild(input);
+  return row;
+}
+
+/**
+ * A duration input row with separate hours and minutes fields.
+ * Stores and returns total minutes.
+ */
+function durationRow(
+  label: string,
+  totalMinutes: number,
+  onChange: (minutes: number) => void,
+): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'field-row';
+
+  const lbl = document.createElement('label');
+  lbl.textContent = label;
+  row.appendChild(lbl);
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'duration-input';
+
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+
+  const hoursInput = document.createElement('input');
+  hoursInput.type = 'number';
+  hoursInput.min = '0';
+  hoursInput.value = String(hours);
+
+  const hoursUnit = document.createElement('span');
+  hoursUnit.className = 'unit';
+  hoursUnit.textContent = 'h';
+
+  const minsInput = document.createElement('input');
+  minsInput.type = 'number';
+  minsInput.min = '0';
+  minsInput.max = '59';
+  minsInput.value = String(mins);
+
+  const minsUnit = document.createElement('span');
+  minsUnit.className = 'unit';
+  minsUnit.textContent = 'm';
+
+  const emitChange = () => {
+    const h = parseInt(hoursInput.value, 10) || 0;
+    const m = parseInt(minsInput.value, 10) || 0;
+    const total = Math.max(1, h * 60 + m);
+    onChange(total);
+  };
+
+  hoursInput.addEventListener('input', emitChange);
+  minsInput.addEventListener('input', emitChange);
+
+  wrapper.appendChild(hoursInput);
+  wrapper.appendChild(hoursUnit);
+  wrapper.appendChild(minsInput);
+  wrapper.appendChild(minsUnit);
+  row.appendChild(wrapper);
+
   return row;
 }
 
@@ -222,46 +282,60 @@ function renderControlCard(
   // Bypass section
   const bypassEnabled = card.querySelector('.bypass-enabled') as HTMLInputElement;
   const bypassConfigEl = card.querySelector('.bypass-config') as HTMLElement;
-  const bypassMax = card.querySelector('.bypass-max') as HTMLInputElement;
-  const bypassWindow = card.querySelector('.bypass-window') as HTMLInputElement;
-  const bypassDuration = card.querySelector('.bypass-duration') as HTMLInputElement;
+
+  function renderBypassFields() {
+    bypassConfigEl.innerHTML = '';
+    const bp = getConfig().bypass;
+    if (!bp) return;
+
+    bypassConfigEl.appendChild(fieldRow('Max bypasses', 'number', String(bp.maxBypasses), (v) => {
+      const cfg = getConfig();
+      if (cfg.bypass) {
+        cfg.bypass.maxBypasses = parseInt(v, 10) || 1;
+        scheduleSave();
+      }
+    }));
+
+    bypassConfigEl.appendChild(durationRow('Per window', bp.windowMinutes, (m) => {
+      const cfg = getConfig();
+      if (cfg.bypass) {
+        cfg.bypass.windowMinutes = m;
+        scheduleSave();
+      }
+    }));
+
+    bypassConfigEl.appendChild(durationRow('Bypass duration', bp.bypassDurationMinutes, (m) => {
+      const cfg = getConfig();
+      if (cfg.bypass) {
+        cfg.bypass.bypassDurationMinutes = m;
+        scheduleSave();
+      }
+    }));
+  }
 
   const currentBypass = getConfig().bypass;
   if (currentBypass) {
     bypassEnabled.checked = true;
     bypassConfigEl.style.display = '';
-    bypassMax.value = String(currentBypass.maxBypasses);
-    bypassWindow.value = String(currentBypass.windowMinutes);
-    bypassDuration.value = String(currentBypass.bypassDurationMinutes);
+    renderBypassFields();
   }
 
   bypassEnabled.addEventListener('change', () => {
     if (bypassEnabled.checked) {
       bypassConfigEl.style.display = '';
       getConfig().bypass = {
-        maxBypasses: parseInt(bypassMax.value, 10) || 3,
-        windowMinutes: parseInt(bypassWindow.value, 10) || 1440,
-        bypassDurationMinutes: parseInt(bypassDuration.value, 10) || 5,
+        maxBypasses: 3,
+        windowMinutes: 1440,
+        bypassDurationMinutes: 5,
       };
+      renderBypassFields();
     } else {
       bypassConfigEl.style.display = 'none';
+      bypassConfigEl.innerHTML = '';
       getConfig().bypass = undefined;
     }
     scheduleSave();
   });
-
-  const saveBypass = () => {
-    const cfg = getConfig();
-    if (!cfg.bypass) return;
-    cfg.bypass.maxBypasses = parseInt(bypassMax.value, 10) || 1;
-    cfg.bypass.windowMinutes = parseInt(bypassWindow.value, 10) || 1440;
-    cfg.bypass.bypassDurationMinutes = parseInt(bypassDuration.value, 10) || 5;
-    scheduleSave();
-  };
-
-  bypassMax.addEventListener('input', saveBypass);
-  bypassWindow.addEventListener('input', saveBypass);
-  bypassDuration.addEventListener('input', saveBypass);
 
   return card;
 }
