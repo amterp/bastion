@@ -160,12 +160,12 @@ body.empty #sites-summary {
 }
 
 .control-pill.blocked {
-  background: #3d2e28;
-  color: #c47a5a;
+  background: #3a3a3c;
+  color: #e8e4df;
 }
 
 .control-pill.bypassed {
-  background: #3d3828;
+  background: #3a3630;
   color: #c9a856;
 }
 
