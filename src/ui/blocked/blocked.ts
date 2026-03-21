@@ -1,18 +1,75 @@
-// Blocked page - reads query params to display reason and reset info (Phase 3)
 export {};
 
 const params = new URLSearchParams(window.location.search);
 const reasonEl = document.getElementById('reason');
 const resetEl = document.getElementById('reset-info');
+const bypassSection = document.getElementById('bypass-section');
 
+// Display reason
 if (reasonEl) {
   reasonEl.textContent = params.get('reason') || 'This site has been blocked by Bastion.';
 }
 
-if (resetEl) {
-  const resetsAt = params.get('resetsAt');
-  if (resetsAt) {
-    const resetDate = new Date(parseInt(resetsAt, 10));
-    resetEl.textContent = `Access resets at ${resetDate.toLocaleTimeString()}`;
+// Display reset countdown
+const resetsAtStr = params.get('resetsAt');
+if (resetEl && resetsAtStr) {
+  const resetsAt = parseInt(resetsAtStr, 10);
+
+  function updateResetCountdown() {
+    const remaining = resetsAt - Date.now();
+    if (remaining <= 0) {
+      resetEl!.textContent = 'Access should be available now. Try refreshing.';
+      return;
+    }
+    const minutes = Math.ceil(remaining / 60_000);
+    const resetTime = new Date(resetsAt).toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    resetEl!.textContent = `Access resets in ~${minutes}m (at ${resetTime})`;
+    setTimeout(updateResetCountdown, 10_000);
   }
+
+  updateResetCountdown();
+}
+
+// Bypass section
+const bypassAllowed = params.get('bypassAllowed') === 'true';
+const bypassRemaining = parseInt(params.get('bypassRemaining') || '0', 10);
+const bypassDuration = parseInt(params.get('bypassDuration') || '5', 10);
+const domain = params.get('domain') || '';
+const controlType = params.get('controlType') || '';
+
+if (bypassSection && bypassAllowed && bypassRemaining > 0) {
+  const info = document.createElement('p');
+  info.className = 'bypass-info';
+  info.textContent = `${bypassRemaining} bypass${bypassRemaining !== 1 ? 'es' : ''} remaining (${bypassDuration}m each)`;
+
+  const btn = document.createElement('button');
+  btn.id = 'bypass-btn';
+  btn.textContent = `Use bypass (${bypassDuration}m)`;
+  btn.addEventListener('click', () => {
+    btn.disabled = true;
+    btn.textContent = 'Activating...';
+    chrome.runtime.sendMessage(
+      {
+        type: 'activate-bypass',
+        domain,
+        controlType,
+        durationMinutes: bypassDuration,
+      },
+      () => {
+        // Go back to let the user retry the navigation
+        history.back();
+      },
+    );
+  });
+
+  bypassSection.appendChild(info);
+  bypassSection.appendChild(btn);
+} else if (bypassSection && params.has('bypassAllowed')) {
+  const info = document.createElement('p');
+  info.className = 'bypass-info bypass-exhausted';
+  info.textContent = 'No bypasses remaining.';
+  bypassSection.appendChild(info);
 }

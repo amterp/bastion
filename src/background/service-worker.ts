@@ -5,9 +5,9 @@ import {
   buildBlockedUrl,
   buildSpeedBumpUrl,
 } from './navigation-handler.js';
-import { hasClearance, addClearance } from '../storage/tracking.js';
+import { hasClearance, addClearance, recordBypass } from '../storage/tracking.js';
 import { SPEED_BUMP_CLEARANCE_TTL_MS } from '../shared/constants.js';
-import type { SiteConfig } from '../shared/types.js';
+import type { ControlType, SiteConfig } from '../shared/types.js';
 import { findMatchingSiteConfig, extractHostname } from '../shared/url-utils.js';
 import { getTrackingData } from '../storage/tracking.js';
 import { evaluateControls } from '../controls/evaluate.js';
@@ -59,11 +59,11 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   const evaluation = await handleNavigation(url, configs);
   if (!evaluation) return;
 
-  const { result, config } = evaluation;
+  const { result, config, bypassInfo } = evaluation;
 
   let redirectUrl: string;
   if (result.action === 'block') {
-    redirectUrl = buildBlockedUrl(result, config.domainPattern);
+    redirectUrl = buildBlockedUrl(result, config.domainPattern, bypassInfo);
   } else if (result.action === 'speed-bump') {
     redirectUrl = buildSpeedBumpUrl(
       url,
@@ -123,6 +123,17 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       clearedAt: now,
       expiresAt: now + SPEED_BUMP_CLEARANCE_TTL_MS,
     }).then(() => sendResponse({ ok: true }));
+    return true; // async response
+  }
+
+  if (message.type === 'activate-bypass') {
+    const { domain, controlType, durationMinutes } = message as {
+      domain: string;
+      controlType: ControlType;
+      durationMinutes: number;
+    };
+    recordBypass(domain, controlType, durationMinutes)
+      .then(() => sendResponse({ ok: true }));
     return true; // async response
   }
 

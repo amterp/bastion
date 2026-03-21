@@ -1,8 +1,15 @@
-import type { SiteConfig } from '../shared/types.js';
+import type { ControlType, SiteConfig } from '../shared/types.js';
 import { extractHostname, findMatchingSiteConfig, findMatchingDomainPattern } from '../shared/url-utils.js';
-import { getTrackingData, updateTrackingData, hasClearance } from '../storage/tracking.js';
+import { getTrackingData, updateTrackingData, countBypassesInWindow } from '../storage/tracking.js';
 import { evaluateControls } from '../controls/evaluate.js';
 import type { ControlResult } from '../controls/types.js';
+
+/** Bypass info to pass to the blocked page */
+export interface BypassInfo {
+  allowed: boolean;
+  remaining: number;
+  durationMinutes: number;
+}
 
 /**
  * Handle a navigation event. Evaluates controls for the URL and
@@ -11,7 +18,7 @@ import type { ControlResult } from '../controls/types.js';
 export async function handleNavigation(
   url: string,
   configs: SiteConfig[],
-): Promise<{ result: ControlResult; config: SiteConfig } | null> {
+): Promise<{ result: ControlResult; config: SiteConfig; bypassInfo: BypassInfo | null } | null> {
   const siteConfig = findMatchingSiteConfig(url, configs);
   if (!siteConfig) return null;
 
@@ -21,7 +28,23 @@ export async function handleNavigation(
 
   if (result.action === 'allow') return null;
 
-  return { result, config: siteConfig };
+  // Compute bypass info for the blocking control
+  let bypassInfo: BypassInfo | null = null;
+  const blockingControl = siteConfig.controls.find(
+    (c) => c.type === result.type && c.enabled && c.bypass,
+  );
+  if (blockingControl?.bypass) {
+    const bp = blockingControl.bypass;
+    const used = countBypassesInWindow(tracking, result.type, bp.windowMinutes, now);
+    const remaining = Math.max(0, bp.maxBypasses - used);
+    bypassInfo = {
+      allowed: remaining > 0,
+      remaining,
+      durationMinutes: bp.bypassDurationMinutes,
+    };
+  }
+
+  return { result, config: siteConfig, bypassInfo };
 }
 
 /**
@@ -48,6 +71,7 @@ export async function addNavEntry(
 export function buildBlockedUrl(
   result: ControlResult,
   domain: string,
+  bypassInfo: BypassInfo | null,
 ): string {
   const params = new URLSearchParams({
     reason: result.reason || 'Blocked by Bastion.',
@@ -57,6 +81,11 @@ export function buildBlockedUrl(
     params.set('resetsAt', String(result.resetsAt));
   }
   params.set('controlType', result.type);
+  if (bypassInfo) {
+    params.set('bypassAllowed', String(bypassInfo.allowed));
+    params.set('bypassRemaining', String(bypassInfo.remaining));
+    params.set('bypassDuration', String(bypassInfo.durationMinutes));
+  }
   return chrome.runtime.getURL(`ui/blocked/blocked.html?${params}`);
 }
 
