@@ -48,30 +48,27 @@
           <button class="btn-icon btn-delete-control" title="Remove control">&times;</button>
         </div>
         <div class="control-fields"></div>
-        <details class="bypass-section">
-          <summary>Bypass Policy</summary>
-          <div class="bypass-fields">
-            <label class="toggle bypass-toggle">
-              <input type="checkbox" class="bypass-enabled" />
-              <span class="toggle-slider"></span>
-              <span>Enable bypass</span>
-            </label>
-            <div class="bypass-config" style="display:none">
-              <div class="field-row">
-                <label>Max bypasses</label>
-                <input type="number" class="bypass-max" value="3" min="1" />
-              </div>
-              <div class="field-row">
-                <label>Per (minutes)</label>
-                <input type="number" class="bypass-window" value="1440" min="1" />
-              </div>
-              <div class="field-row">
-                <label>Duration (minutes)</label>
-                <input type="number" class="bypass-duration" value="5" min="1" />
-              </div>
+        <div class="bypass-section">
+          <label class="toggle bypass-toggle">
+            <input type="checkbox" class="bypass-enabled" />
+            <span class="toggle-slider"></span>
+            <span>Bypass Policy</span>
+          </label>
+          <div class="bypass-config" style="display:none">
+            <div class="field-row">
+              <label>Max bypasses</label>
+              <input type="number" class="bypass-max" value="3" min="1" />
+            </div>
+            <div class="field-row">
+              <label>Per (minutes)</label>
+              <input type="number" class="bypass-window" value="1440" min="1" />
+            </div>
+            <div class="field-row">
+              <label>Duration (minutes)</label>
+              <input type="number" class="bypass-duration" value="5" min="1" />
             </div>
           </div>
-        </details>
+        </div>
       </div>
     </template>
   </div>

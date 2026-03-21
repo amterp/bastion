@@ -175,24 +175,13 @@ h1 {
   padding-top: 8px;
 }
 
-.bypass-section summary {
-  font-size: 12px;
-  color: #777;
-  cursor: pointer;
-  user-select: none;
-}
-
-.bypass-fields {
-  margin-top: 8px;
-}
-
 .bypass-toggle {
   font-size: 13px;
   color: #aaa;
-  margin-bottom: 8px;
 }
 
 .bypass-config {
+  margin-top: 8px;
   padding-left: 4px;
 }
 
