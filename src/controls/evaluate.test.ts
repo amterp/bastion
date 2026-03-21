@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { evaluateControls } from './evaluate.js';
 import { initControls } from './init.js';
-import type { SiteConfig, TimeLimitConfig } from '../shared/types.js';
+import type { SiteConfig } from '../shared/types.js';
 import { emptySiteTrackingData } from '../storage/schema.js';
 
 const MINUTE = 60_000;
@@ -45,7 +45,9 @@ describe('evaluateControls', () => {
     tracking.timeEntries = [{ start: now - 15 * MINUTE, end: now }];
     const result = evaluateControls(config, tracking, now);
     expect(result.action).toBe('block');
-    expect(result.type).toBe('time-limit');
+    if (result.action === 'block') {
+      expect(result.type).toBe('time-limit');
+    }
   });
 
   it('skips controls with active bypasses', () => {

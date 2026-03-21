@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { extractHostname, matchesDomainPattern, findMatchingSiteConfig } from './url-utils.js';
+import { isValidDomainPattern } from './types.js';
 import type { SiteConfig } from './types.js';
 
 describe('extractHostname', () => {
@@ -18,6 +19,26 @@ describe('extractHostname', () => {
   it('returns null for invalid URLs', () => {
     expect(extractHostname('not-a-url')).toBeNull();
     expect(extractHostname('')).toBeNull();
+  });
+});
+
+describe('isValidDomainPattern', () => {
+  it('accepts valid domain patterns', () => {
+    expect(isValidDomainPattern('reddit.com')).toBe(true);
+    expect(isValidDomainPattern('www.reddit.com')).toBe(true);
+    expect(isValidDomainPattern('*.reddit.com')).toBe(true);
+  });
+
+  it('rejects TLD-only patterns', () => {
+    expect(isValidDomainPattern('com')).toBe(false);
+    expect(isValidDomainPattern('net')).toBe(false);
+    expect(isValidDomainPattern('org')).toBe(false);
+  });
+
+  it('rejects empty and malformed patterns', () => {
+    expect(isValidDomainPattern('')).toBe(false);
+    expect(isValidDomainPattern('.com')).toBe(false);
+    expect(isValidDomainPattern('reddit.')).toBe(false);
   });
 });
 
@@ -74,6 +95,13 @@ describe('matchesDomainPattern', () => {
 
     it('does not match the parent domain', () => {
       expect(matchesDomainPattern('reddit.com', 'www.reddit.com')).toBe(false);
+    });
+  });
+
+  describe('TLD-only patterns are rejected', () => {
+    it('does not match any hostname against a TLD pattern', () => {
+      expect(matchesDomainPattern('reddit.com', 'com')).toBe(false);
+      expect(matchesDomainPattern('google.net', 'net')).toBe(false);
     });
   });
 });

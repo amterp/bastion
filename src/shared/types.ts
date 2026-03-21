@@ -36,16 +36,15 @@ export interface NavFrequencyConfig extends ControlConfigBase {
   windowMinutes: number;
 }
 
-export type DegradationTrigger = 'time-of-day' | 'time-on-site';
+/** Degradation trigger as a nested discriminated union */
+export type DegradationTrigger =
+  | { type: 'time-of-day'; afterHour: number }
+  | { type: 'time-on-site'; afterMinutes: number };
 
 export interface DegradationConfig extends ControlConfigBase {
   type: 'degradation';
   effect: 'grayscale';
   trigger: DegradationTrigger;
-  /** For 'time-of-day': activate after this hour (24h format, e.g. 21 for 9pm) */
-  afterHour?: number;
-  /** For 'time-on-site': activate after this many minutes on the site */
-  afterMinutes?: number;
 }
 
 export interface SpeedBumpConfig extends ControlConfigBase {
@@ -68,4 +67,17 @@ export interface SiteConfig {
   controls: ControlConfig[];
   /** Master toggle for this site */
   enabled: boolean;
+}
+
+/**
+ * Validate a domain pattern. Must contain at least one dot to prevent
+ * accidentally matching all sites on a TLD (e.g. "com").
+ */
+export function isValidDomainPattern(pattern: string): boolean {
+  const trimmed = pattern.trim().toLowerCase();
+  if (!trimmed) return false;
+  // Strip wildcard prefix for validation
+  const domain = trimmed.startsWith('*.') ? trimmed.slice(2) : trimmed;
+  // Must contain at least one dot (e.g. "reddit.com", not "com")
+  return domain.includes('.') && !domain.startsWith('.') && !domain.endsWith('.');
 }

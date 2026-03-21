@@ -5,11 +5,21 @@ import {
   pruneTimeEntries,
   pruneNavEntries,
   formatDuration,
+  minutesToMs,
+  computeResetTime,
+  computeNavResetTime,
 } from './time-utils.js';
 import type { TimeEntry, NavEntry } from '../storage/schema.js';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
+
+describe('minutesToMs', () => {
+  it('converts minutes to milliseconds', () => {
+    expect(minutesToMs(1)).toBe(60_000);
+    expect(minutesToMs(60)).toBe(3_600_000);
+  });
+});
 
 describe('totalTimeInWindow', () => {
   const now = Date.now();
@@ -105,6 +115,53 @@ describe('pruneNavEntries', () => {
     ];
     const result = pruneNavEntries(entries, 60, now);
     expect(result).toHaveLength(1);
+  });
+});
+
+describe('computeResetTime', () => {
+  const now = Date.now();
+
+  it('computes correct reset when single entry exceeds limit', () => {
+    const entries: TimeEntry[] = [
+      { start: now - 40 * MINUTE, end: now - 10 * MINUTE }, // 30 min
+    ];
+    const reset = computeResetTime(entries, 120, 30, now);
+    // Entry end is now-10min, falls out at now-10min + 120min = now+110min
+    expect(reset).toBeCloseTo(now + 110 * MINUTE, -3);
+  });
+
+  it('correctly handles multiple entries spread across window', () => {
+    const entries: TimeEntry[] = [
+      { start: now - 100 * MINUTE, end: now - 80 * MINUTE }, // 20 min
+      { start: now - 50 * MINUTE, end: now - 20 * MINUTE },  // 30 min
+    ];
+    // Total = 50 min, limit = 30 min. Need to drop 20+ min.
+    // Removing first entry (20 min) leaves 30 min = still at limit.
+    // Removing second entry (30 min) would bring below - so reset is
+    // when the second entry's end falls out: now-20min + 120min = now+100min
+    const reset = computeResetTime(entries, 120, 30, now);
+    expect(reset).toBeCloseTo(now + 100 * MINUTE, -3);
+  });
+
+  it('returns fallback when no entries', () => {
+    const reset = computeResetTime([], 120, 30, now);
+    expect(reset).toBe(now + 120 * MINUTE);
+  });
+});
+
+describe('computeNavResetTime', () => {
+  const now = Date.now();
+
+  it('computes when excess entries fall out of window', () => {
+    const entries = [
+      { timestamp: now - 50 * MINUTE },
+      { timestamp: now - 30 * MINUTE },
+      { timestamp: now - 10 * MINUTE },
+    ];
+    // 3 entries, limit 3, need to drop 1 to get to 2.
+    // Oldest (now-50min) falls out at now-50min + 60min = now+10min
+    const reset = computeNavResetTime(entries, 60, 3, now);
+    expect(reset).toBeCloseTo(now + 10 * MINUTE, -3);
   });
 });
 

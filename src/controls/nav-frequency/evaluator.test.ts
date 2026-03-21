@@ -42,7 +42,9 @@ describe('navFrequencyEvaluator', () => {
     ];
     const result = navFrequencyEvaluator.evaluate(makeConfig(), tracking, now);
     expect(result.action).toBe('block');
-    expect(result.reason).toContain('3 times');
+    if (result.action === 'block') {
+      expect(result.reason).toContain('3 times');
+    }
   });
 
   it('blocks when over the limit', () => {
@@ -76,7 +78,9 @@ describe('navFrequencyEvaluator', () => {
       { timestamp: now - 10 * MINUTE },
     ];
     const result = navFrequencyEvaluator.evaluate(makeConfig(), tracking, now);
-    expect(result.resetsAt).toBeDefined();
-    expect(result.resetsAt!).toBeGreaterThan(now);
+    expect(result.action).toBe('block');
+    if (result.action === 'block') {
+      expect(result.resetsAt).toBeGreaterThan(now);
+    }
   });
 });

@@ -1,12 +1,12 @@
 import type { SiteConfig } from '../shared/types.js';
+import { ORPHAN_SESSION_THRESHOLD_MS } from '../shared/constants.js';
 import { extractHostname, findMatchingDomainPattern } from '../shared/url-utils.js';
 import {
   loadActiveSession,
   saveActiveSession,
-  getTrackingData,
-  updateTrackingData,
+  clearActiveSession,
+  mutateTrackingData,
 } from '../storage/tracking.js';
-import type { ActiveSession } from '../storage/schema.js';
 
 /**
  * Flush the current active session - record the accumulated time
@@ -22,15 +22,15 @@ export async function flushActiveSession(
   const duration = now - session.startedAt;
   // Only record meaningful time (> 1 second)
   if (duration > 1000) {
-    const tracking = await getTrackingData(session.domainPattern);
-    tracking.timeEntries.push({
-      start: session.startedAt,
-      end: now,
+    await mutateTrackingData(session.domainPattern, (data) => {
+      data.timeEntries.push({
+        start: session.startedAt,
+        end: now,
+      });
     });
-    await updateTrackingData(session.domainPattern, tracking);
   }
 
-  await saveActiveSession(null);
+  await clearActiveSession();
   return session.domainPattern;
 }
 
@@ -121,7 +121,7 @@ export async function onTabRemoved(
 /**
  * Handle a navigation completing on a tab.
  * If the tab navigates away from a tracked site, flush the session.
- * If it navigates to a tracked site, start tracking.
+ * If it navigates to a tracked site (same or different), track it.
  */
 export async function onNavigationCommitted(
   tabId: number,
@@ -137,7 +137,7 @@ export async function onNavigationCommitted(
     : null;
 
   if (session && session.tabId === tabId) {
-    // Same tab, check if domain changed
+    // Same tab - if domain changed, flush and possibly restart
     if (newDomain !== session.domainPattern) {
       await flushActiveSession(now);
       if (newDomain) {
@@ -148,7 +148,9 @@ export async function onNavigationCommitted(
     return;
   }
 
-  // Not the tracked tab - only start tracking if this tab is currently active
+  // Different tab or no active session. If this tab is navigating to a
+  // tracked domain and is the active tab, start tracking it. This handles
+  // the case where the same domain is open in a different active tab.
   if (newDomain) {
     try {
       const tab = await chrome.tabs.get(tabId);
@@ -195,26 +197,24 @@ export async function heartbeat(
 
 /**
  * Recover from an orphaned session on service worker wake-up.
- * If there's a stale session (> 2 minutes old with no heartbeat),
- * we bound it and flush.
+ * If there's a stale session (older than the orphan threshold
+ * with no heartbeat), we bound it conservatively and flush.
  */
 export async function recoverOrphanedSession(now: number): Promise<void> {
   const session = await loadActiveSession();
   if (!session) return;
 
   const age = now - session.startedAt;
-  const TWO_MINUTES = 2 * 60_000;
 
-  if (age > TWO_MINUTES) {
-    // Session is stale - flush it with bounded end time
-    // Use startedAt + 2 min as the end bound (conservative estimate)
-    const boundedEnd = session.startedAt + TWO_MINUTES;
-    const tracking = await getTrackingData(session.domainPattern);
-    tracking.timeEntries.push({
-      start: session.startedAt,
-      end: boundedEnd,
+  if (age > ORPHAN_SESSION_THRESHOLD_MS) {
+    // Session is stale - record a bounded time entry
+    const boundedEnd = session.startedAt + ORPHAN_SESSION_THRESHOLD_MS;
+    await mutateTrackingData(session.domainPattern, (data) => {
+      data.timeEntries.push({
+        start: session.startedAt,
+        end: boundedEnd,
+      });
     });
-    await updateTrackingData(session.domainPattern, tracking);
-    await saveActiveSession(null);
+    await clearActiveSession();
   }
 }

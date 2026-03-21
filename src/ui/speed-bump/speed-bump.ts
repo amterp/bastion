@@ -1,4 +1,5 @@
-// Speed bump page - countdown timer before granting access (Phase 6)
+import type { SpeedBumpClearedMessage } from '../../shared/messages.js';
+
 export {};
 
 const params = new URLSearchParams(window.location.search);
@@ -32,10 +33,13 @@ updateCountdown();
 
 if (proceedBtn && targetUrl) {
   proceedBtn.addEventListener('click', () => {
-    // Signal the service worker to grant a clearance token, then navigate
-    chrome.runtime.sendMessage(
-      { type: 'speed-bump-cleared', url: targetUrl },
-      () => { window.location.href = targetUrl; },
-    );
+    // Signal the service worker to grant a clearance token by domain, then navigate
+    const msg: SpeedBumpClearedMessage = {
+      type: 'speed-bump-cleared',
+      domain,
+    };
+    chrome.runtime.sendMessage(msg, () => {
+      window.location.href = targetUrl;
+    });
   });
 }

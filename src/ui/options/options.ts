@@ -6,8 +6,8 @@ import type {
   NavFrequencyConfig,
   DegradationConfig,
   SpeedBumpConfig,
-  BypassPolicy,
 } from '../../shared/types.js';
+import { isValidDomainPattern } from '../../shared/types.js';
 import { loadSiteConfigs, saveSiteConfigs } from '../../storage/settings.js';
 
 // --- State ---
@@ -59,7 +59,10 @@ function defaultControl(type: ControlType): ControlConfig {
     case 'nav-frequency':
       return { type: 'nav-frequency', enabled: true, maxNavigations: 3, windowMinutes: 60 };
     case 'degradation':
-      return { type: 'degradation', enabled: true, effect: 'grayscale', trigger: 'time-of-day', afterHour: 21 };
+      return {
+        type: 'degradation', enabled: true, effect: 'grayscale',
+        trigger: { type: 'time-of-day', afterHour: 21 },
+      };
     case 'speed-bump':
       return { type: 'speed-bump', enabled: true, delaySeconds: 10 };
   }
@@ -103,7 +106,7 @@ function renderControlFields(container: HTMLElement, config: ControlConfig): voi
         <option value="time-of-day">Time of day</option>
         <option value="time-on-site">Time on site</option>
       `;
-      triggerSelect.value = config.trigger;
+      triggerSelect.value = config.trigger.type;
       triggerRow.appendChild(triggerLabel);
       triggerRow.appendChild(triggerSelect);
       container.appendChild(triggerRow);
@@ -113,23 +116,27 @@ function renderControlFields(container: HTMLElement, config: ControlConfig): voi
 
       const renderTriggerFields = () => {
         detailContainer.innerHTML = '';
-        if ((config as DegradationConfig).trigger === 'time-of-day') {
-          detailContainer.appendChild(fieldRow('After hour (0-23)', 'number', String(config.afterHour ?? 21), (v) => {
-            (config as DegradationConfig).afterHour = parseInt(v, 10);
-            (config as DegradationConfig).afterMinutes = undefined;
+        const dc = config as DegradationConfig;
+        if (dc.trigger.type === 'time-of-day') {
+          detailContainer.appendChild(fieldRow('After hour (0-23)', 'number', String(dc.trigger.afterHour), (v) => {
+            dc.trigger = { type: 'time-of-day', afterHour: parseInt(v, 10) || 0 };
             scheduleSave();
           }));
         } else {
-          detailContainer.appendChild(fieldRow('After minutes on site', 'number', String(config.afterMinutes ?? 10), (v) => {
-            (config as DegradationConfig).afterMinutes = parseInt(v, 10);
-            (config as DegradationConfig).afterHour = undefined;
+          detailContainer.appendChild(fieldRow('After minutes on site', 'number', String(dc.trigger.afterMinutes), (v) => {
+            dc.trigger = { type: 'time-on-site', afterMinutes: parseInt(v, 10) || 1 };
             scheduleSave();
           }));
         }
       };
 
       triggerSelect.addEventListener('change', () => {
-        (config as DegradationConfig).trigger = triggerSelect.value as 'time-of-day' | 'time-on-site';
+        const dc = config as DegradationConfig;
+        if (triggerSelect.value === 'time-of-day') {
+          dc.trigger = { type: 'time-of-day', afterHour: 21 };
+        } else {
+          dc.trigger = { type: 'time-on-site', afterMinutes: 10 };
+        }
         renderTriggerFields();
         scheduleSave();
       });
@@ -175,26 +182,30 @@ function renderControlCard(
 ): HTMLElement {
   const frag = controlTemplate.content.cloneNode(true) as DocumentFragment;
   const card = frag.querySelector('.control-card') as HTMLElement;
-  const config = siteConfig.controls[controlIndex];
+
+  // Use a getter that always reads from the array to avoid stale closures
+  const getConfig = () => siteConfig.controls[controlIndex];
 
   // Type selector
   const typeSelect = card.querySelector('.control-type') as HTMLSelectElement;
-  typeSelect.value = config.type;
+  typeSelect.value = getConfig().type;
   typeSelect.addEventListener('change', () => {
     const newType = typeSelect.value as ControlType;
+    const oldConfig = getConfig();
     const newConfig = defaultControl(newType);
-    newConfig.enabled = config.enabled;
-    newConfig.bypass = config.bypass;
+    newConfig.enabled = oldConfig.enabled;
+    newConfig.bypass = oldConfig.bypass;
     siteConfig.controls[controlIndex] = newConfig;
-    renderControlFields(card.querySelector('.control-fields')!, newConfig);
+    // Re-render the entire card to avoid stale closures
+    renderAllSites();
     scheduleSave();
   });
 
-  // Enabled toggle
+  // Enabled toggle - reads from array each time
   const enabledToggle = card.querySelector('.control-enabled') as HTMLInputElement;
-  enabledToggle.checked = config.enabled;
+  enabledToggle.checked = getConfig().enabled;
   enabledToggle.addEventListener('change', () => {
-    config.enabled = enabledToggle.checked;
+    getConfig().enabled = enabledToggle.checked;
     scheduleSave();
   });
 
@@ -206,43 +217,45 @@ function renderControlCard(
   });
 
   // Control-specific fields
-  renderControlFields(card.querySelector('.control-fields')!, config);
+  renderControlFields(card.querySelector('.control-fields')!, getConfig());
 
   // Bypass section
   const bypassEnabled = card.querySelector('.bypass-enabled') as HTMLInputElement;
-  const bypassConfig = card.querySelector('.bypass-config') as HTMLElement;
+  const bypassConfigEl = card.querySelector('.bypass-config') as HTMLElement;
   const bypassMax = card.querySelector('.bypass-max') as HTMLInputElement;
   const bypassWindow = card.querySelector('.bypass-window') as HTMLInputElement;
   const bypassDuration = card.querySelector('.bypass-duration') as HTMLInputElement;
 
-  if (config.bypass) {
+  const currentBypass = getConfig().bypass;
+  if (currentBypass) {
     bypassEnabled.checked = true;
-    bypassConfig.style.display = '';
-    bypassMax.value = String(config.bypass.maxBypasses);
-    bypassWindow.value = String(config.bypass.windowMinutes);
-    bypassDuration.value = String(config.bypass.bypassDurationMinutes);
+    bypassConfigEl.style.display = '';
+    bypassMax.value = String(currentBypass.maxBypasses);
+    bypassWindow.value = String(currentBypass.windowMinutes);
+    bypassDuration.value = String(currentBypass.bypassDurationMinutes);
   }
 
   bypassEnabled.addEventListener('change', () => {
     if (bypassEnabled.checked) {
-      bypassConfig.style.display = '';
-      config.bypass = {
+      bypassConfigEl.style.display = '';
+      getConfig().bypass = {
         maxBypasses: parseInt(bypassMax.value, 10) || 3,
         windowMinutes: parseInt(bypassWindow.value, 10) || 1440,
         bypassDurationMinutes: parseInt(bypassDuration.value, 10) || 5,
       };
     } else {
-      bypassConfig.style.display = 'none';
-      config.bypass = undefined;
+      bypassConfigEl.style.display = 'none';
+      getConfig().bypass = undefined;
     }
     scheduleSave();
   });
 
   const saveBypass = () => {
-    if (!config.bypass) return;
-    config.bypass.maxBypasses = parseInt(bypassMax.value, 10) || 1;
-    config.bypass.windowMinutes = parseInt(bypassWindow.value, 10) || 1440;
-    config.bypass.bypassDurationMinutes = parseInt(bypassDuration.value, 10) || 5;
+    const cfg = getConfig();
+    if (!cfg.bypass) return;
+    cfg.bypass.maxBypasses = parseInt(bypassMax.value, 10) || 1;
+    cfg.bypass.windowMinutes = parseInt(bypassWindow.value, 10) || 1440;
+    cfg.bypass.bypassDurationMinutes = parseInt(bypassDuration.value, 10) || 5;
     scheduleSave();
   };
 
@@ -259,11 +272,20 @@ function renderSiteCard(siteConfig: SiteConfig): HTMLElement {
   const frag = siteTemplate.content.cloneNode(true) as DocumentFragment;
   const card = frag.querySelector('.site-card') as HTMLElement;
 
-  // Domain input
+  // Domain input with validation
   const domainInput = card.querySelector('.domain-input') as HTMLInputElement;
   domainInput.value = siteConfig.domainPattern;
   domainInput.addEventListener('input', () => {
-    siteConfig.domainPattern = domainInput.value.trim();
+    const value = domainInput.value.trim();
+    siteConfig.domainPattern = value;
+    // Visual validation feedback
+    if (value && !isValidDomainPattern(value)) {
+      domainInput.style.borderColor = '#e94560';
+      domainInput.title = 'Pattern must contain at least one dot (e.g. "reddit.com")';
+    } else {
+      domainInput.style.borderColor = '';
+      domainInput.title = '';
+    }
     scheduleSave();
   });
 

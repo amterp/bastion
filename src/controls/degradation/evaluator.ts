@@ -11,9 +11,7 @@ export const degradationEvaluator: ControlEvaluator<DegradationConfig> = {
     tracking: SiteTrackingData,
     now: number,
   ): ControlResult {
-    const shouldDegrade = shouldApplyDegradation(config, tracking, now);
-
-    if (shouldDegrade) {
+    if (shouldApplyDegradation(config, tracking, now)) {
       return {
         type: 'degradation',
         action: 'degrade',
@@ -21,10 +19,7 @@ export const degradationEvaluator: ControlEvaluator<DegradationConfig> = {
       };
     }
 
-    return {
-      type: 'degradation',
-      action: 'allow',
-    };
+    return { action: 'allow' };
   },
 };
 
@@ -33,22 +28,22 @@ function shouldApplyDegradation(
   tracking: SiteTrackingData,
   now: number,
 ): boolean {
-  switch (config.trigger) {
+  const trigger = config.trigger;
+
+  switch (trigger.type) {
     case 'time-of-day': {
-      if (config.afterHour === undefined) return false;
       const currentHour = new Date(now).getHours();
-      return currentHour >= config.afterHour;
+      return currentHour >= trigger.afterHour;
     }
 
     case 'time-on-site': {
-      if (config.afterMinutes === undefined) return false;
-      // Use a large window (24h) to capture the current session
+      // Use a 24h window to capture today's cumulative usage
       const minutesOnSite = totalTimeInWindow(
         tracking.timeEntries,
         24 * 60,
         now,
       );
-      return minutesOnSite >= config.afterMinutes;
+      return minutesOnSite >= trigger.afterMinutes;
     }
 
     default:

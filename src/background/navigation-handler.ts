@@ -1,6 +1,6 @@
-import type { ControlType, SiteConfig } from '../shared/types.js';
+import type { SiteConfig } from '../shared/types.js';
 import { extractHostname, findMatchingSiteConfig, findMatchingDomainPattern } from '../shared/url-utils.js';
-import { getTrackingData, updateTrackingData, countBypassesInWindow } from '../storage/tracking.js';
+import { getTrackingData, mutateTrackingData, countBypassesInWindow } from '../storage/tracking.js';
 import { evaluateControls } from '../controls/evaluate.js';
 import type { ControlResult } from '../controls/types.js';
 
@@ -30,18 +30,20 @@ export async function handleNavigation(
 
   // Compute bypass info for the blocking control
   let bypassInfo: BypassInfo | null = null;
-  const blockingControl = siteConfig.controls.find(
-    (c) => c.type === result.type && c.enabled && c.bypass,
-  );
-  if (blockingControl?.bypass) {
-    const bp = blockingControl.bypass;
-    const used = countBypassesInWindow(tracking, result.type, bp.windowMinutes, now);
-    const remaining = Math.max(0, bp.maxBypasses - used);
-    bypassInfo = {
-      allowed: remaining > 0,
-      remaining,
-      durationMinutes: bp.bypassDurationMinutes,
-    };
+  if (result.action === 'block') {
+    const blockingControl = siteConfig.controls.find(
+      (c) => c.type === result.type && c.enabled && c.bypass,
+    );
+    if (blockingControl?.bypass) {
+      const bp = blockingControl.bypass;
+      const used = countBypassesInWindow(tracking, result.type, bp.windowMinutes, now);
+      const remaining = Math.max(0, bp.maxBypasses - used);
+      bypassInfo = {
+        allowed: remaining > 0,
+        remaining,
+        durationMinutes: bp.bypassDurationMinutes,
+      };
+    }
   }
 
   return { result, config: siteConfig, bypassInfo };
@@ -49,6 +51,9 @@ export async function handleNavigation(
 
 /**
  * Record a navigation event for nav-frequency tracking.
+ * Only records if the URL matches a configured site.
+ * Skips recording if the navigation was to an extension page
+ * (the caller should filter those).
  */
 export async function addNavEntry(
   url: string,
@@ -60,26 +65,27 @@ export async function addNavEntry(
   const domainPattern = findMatchingDomainPattern(hostname, configs);
   if (!domainPattern) return;
 
-  const tracking = await getTrackingData(domainPattern);
-  tracking.navEntries.push({ timestamp: Date.now() });
-  await updateTrackingData(domainPattern, tracking);
+  await mutateTrackingData(domainPattern, (data) => {
+    data.navEntries.push({ timestamp: Date.now() });
+  });
 }
 
 /**
  * Build the redirect URL for a blocked page.
+ * Includes the original URL so the bypass button can navigate back.
  */
 export function buildBlockedUrl(
-  result: ControlResult,
+  result: ControlResult & { action: 'block' },
   domain: string,
+  originalUrl: string,
   bypassInfo: BypassInfo | null,
 ): string {
   const params = new URLSearchParams({
-    reason: result.reason || 'Blocked by Bastion.',
+    reason: result.reason,
     domain,
+    originalUrl,
   });
-  if (result.resetsAt) {
-    params.set('resetsAt', String(result.resetsAt));
-  }
+  params.set('resetsAt', String(result.resetsAt));
   params.set('controlType', result.type);
   if (bypassInfo) {
     params.set('bypassAllowed', String(bypassInfo.allowed));

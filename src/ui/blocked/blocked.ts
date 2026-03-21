@@ -1,3 +1,5 @@
+import type { ActivateBypassMessage } from '../../shared/messages.js';
+
 export {};
 
 const params = new URLSearchParams(window.location.search);
@@ -39,6 +41,7 @@ const bypassRemaining = parseInt(params.get('bypassRemaining') || '0', 10);
 const bypassDuration = parseInt(params.get('bypassDuration') || '5', 10);
 const domain = params.get('domain') || '';
 const controlType = params.get('controlType') || '';
+const originalUrl = params.get('originalUrl') || '';
 
 if (bypassSection && bypassAllowed && bypassRemaining > 0) {
   const info = document.createElement('p');
@@ -51,18 +54,20 @@ if (bypassSection && bypassAllowed && bypassRemaining > 0) {
   btn.addEventListener('click', () => {
     btn.disabled = true;
     btn.textContent = 'Activating...';
-    chrome.runtime.sendMessage(
-      {
-        type: 'activate-bypass',
-        domain,
-        controlType,
-        durationMinutes: bypassDuration,
-      },
-      () => {
-        // Go back to let the user retry the navigation
+    const msg: ActivateBypassMessage = {
+      type: 'activate-bypass',
+      domain,
+      controlType: controlType as ActivateBypassMessage['controlType'],
+      durationMinutes: bypassDuration,
+    };
+    chrome.runtime.sendMessage(msg, () => {
+      // Navigate to the original URL if we have it, otherwise go back
+      if (originalUrl) {
+        window.location.href = originalUrl;
+      } else {
         history.back();
-      },
-    );
+      }
+    });
   });
 
   bypassSection.appendChild(info);

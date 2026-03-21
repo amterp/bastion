@@ -1,8 +1,7 @@
 import type { TimeLimitConfig } from '../../shared/types.js';
 import type { SiteTrackingData } from '../../storage/schema.js';
-import { totalTimeInWindow } from '../../shared/time-utils.js';
+import { totalTimeInWindow, computeResetTime, formatDuration } from '../../shared/time-utils.js';
 import type { ControlEvaluator, ControlResult } from '../types.js';
-import { formatDuration } from '../../shared/time-utils.js';
 
 export const timeLimitEvaluator: ControlEvaluator<TimeLimitConfig> = {
   type: 'time-limit',
@@ -19,14 +18,12 @@ export const timeLimitEvaluator: ControlEvaluator<TimeLimitConfig> = {
     );
 
     if (usedMinutes >= config.maxMinutes) {
-      // Estimate when the oldest entry in the window will fall out
-      const windowStartMs = now - config.windowMinutes * 60_000;
-      const oldestInWindow = tracking.timeEntries.find(
-        (e) => e.end > windowStartMs,
+      const resetsAt = computeResetTime(
+        tracking.timeEntries,
+        config.windowMinutes,
+        config.maxMinutes,
+        now,
       );
-      const resetsAt = oldestInWindow
-        ? oldestInWindow.end + config.windowMinutes * 60_000
-        : now + config.windowMinutes * 60_000;
 
       return {
         type: 'time-limit',
@@ -39,9 +36,6 @@ export const timeLimitEvaluator: ControlEvaluator<TimeLimitConfig> = {
       };
     }
 
-    return {
-      type: 'time-limit',
-      action: 'allow',
-    };
+    return { action: 'allow' };
   },
 };

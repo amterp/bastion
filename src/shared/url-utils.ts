@@ -1,4 +1,5 @@
 import type { DomainPattern, SiteConfig } from './types.js';
+import { isValidDomainPattern } from './types.js';
 
 /**
  * Extract the hostname from a URL string.
@@ -27,11 +28,15 @@ export function extractHostname(url: string): string | null {
  *
  * The key insight: a bare domain like "reddit.com" is the most common config
  * and should match the domain itself plus any subdomain.
+ *
+ * Rejects invalid patterns (e.g. TLD-only like "com") as a safety measure.
  */
 export function matchesDomainPattern(
   hostname: string,
   pattern: DomainPattern,
 ): boolean {
+  if (!isValidDomainPattern(pattern)) return false;
+
   const normalizedHost = hostname.toLowerCase();
   const normalizedPattern = pattern.toLowerCase();
 

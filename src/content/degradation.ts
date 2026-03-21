@@ -1,3 +1,5 @@
+import type { CheckDegradationMessage, DegradationResponse } from '../shared/messages.js';
+
 export {};
 
 const GRAYSCALE_STYLE_ID = 'bastion-grayscale';
@@ -20,17 +22,18 @@ function removeGrayscale(): void {
 
 /** Ask the service worker whether degradation should be applied */
 function checkDegradation(): void {
-  chrome.runtime.sendMessage(
-    { type: 'check-degradation', url: window.location.href },
-    (response) => {
-      if (chrome.runtime.lastError) return;
-      if (response?.degrade && response.effect === 'grayscale') {
-        applyGrayscale();
-      } else {
-        removeGrayscale();
-      }
-    },
-  );
+  const msg: CheckDegradationMessage = {
+    type: 'check-degradation',
+    url: window.location.href,
+  };
+  chrome.runtime.sendMessage(msg, (response: DegradationResponse | undefined) => {
+    if (chrome.runtime.lastError) return;
+    if (response?.degrade && response.effect === 'grayscale') {
+      applyGrayscale();
+    } else {
+      removeGrayscale();
+    }
+  });
 }
 
 // Check on load
@@ -38,12 +41,3 @@ checkDegradation();
 
 // Re-check periodically (handles time-on-site triggers that activate mid-session)
 setInterval(checkDegradation, 30_000);
-
-// Listen for push updates from the service worker
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === 'apply-degradation' && message.effect === 'grayscale') {
-    applyGrayscale();
-  } else if (message.type === 'remove-degradation') {
-    removeGrayscale();
-  }
-});

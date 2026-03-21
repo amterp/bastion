@@ -1,4 +1,4 @@
-import type { ControlType } from '../shared/types.js';
+import type { ControlType, DomainPattern } from '../shared/types.js';
 
 /** A recorded time segment on a site */
 export interface TimeEntry {
@@ -36,9 +36,9 @@ export interface ActiveSession {
   startedAt: number; // epoch ms
 }
 
-/** Short-lived token allowing a URL through after speed bump clearance */
+/** Speed bump clearance - keyed by domain, not exact URL */
 export interface SpeedBumpClearance {
-  url: string;
+  domain: DomainPattern;
   clearedAt: number;  // epoch ms
   expiresAt: number;  // epoch ms
 }

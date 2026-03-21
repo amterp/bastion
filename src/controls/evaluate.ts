@@ -5,11 +5,7 @@ import { getEvaluator } from './registry.js';
 import type { ControlResult } from './types.js';
 import { ACTION_PRIORITY } from './types.js';
 
-/** Default "allow" result when no controls trigger */
-const ALLOW_RESULT: ControlResult = {
-  type: 'time-limit',
-  action: 'allow',
-};
+const ALLOW: ControlResult = { action: 'allow' };
 
 /**
  * Evaluate all enabled controls for a site.
@@ -22,7 +18,7 @@ export function evaluateControls(
   tracking: SiteTrackingData,
   now: number,
 ): ControlResult {
-  let mostRestrictive = ALLOW_RESULT;
+  let mostRestrictive = ALLOW;
 
   for (const control of siteConfig.controls) {
     if (!control.enabled) continue;

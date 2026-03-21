@@ -10,8 +10,7 @@ function makeTimeOfDayConfig(afterHour: number): DegradationConfig {
     type: 'degradation',
     enabled: true,
     effect: 'grayscale',
-    trigger: 'time-of-day',
-    afterHour,
+    trigger: { type: 'time-of-day', afterHour },
   };
 }
 
@@ -20,15 +19,13 @@ function makeTimeOnSiteConfig(afterMinutes: number): DegradationConfig {
     type: 'degradation',
     enabled: true,
     effect: 'grayscale',
-    trigger: 'time-on-site',
-    afterMinutes,
+    trigger: { type: 'time-on-site', afterMinutes },
   };
 }
 
 describe('degradationEvaluator', () => {
   describe('time-of-day trigger', () => {
     it('degrades when current hour is at or after threshold', () => {
-      // Create a timestamp at 10pm
       const at10pm = new Date();
       at10pm.setHours(22, 0, 0, 0);
       const result = degradationEvaluator.evaluate(
@@ -37,7 +34,9 @@ describe('degradationEvaluator', () => {
         at10pm.getTime(),
       );
       expect(result.action).toBe('degrade');
-      expect(result.degradeEffect).toBe('grayscale');
+      if (result.action === 'degrade') {
+        expect(result.degradeEffect).toBe('grayscale');
+      }
     });
 
     it('allows when current hour is before threshold', () => {

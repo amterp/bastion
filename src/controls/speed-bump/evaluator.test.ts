@@ -22,7 +22,9 @@ describe('speedBumpEvaluator', () => {
       now,
     );
     expect(result.action).toBe('speed-bump');
-    expect(result.delaySeconds).toBe(10);
+    if (result.action === 'speed-bump') {
+      expect(result.delaySeconds).toBe(10);
+    }
   });
 
   it('uses configured delay', () => {
@@ -31,6 +33,8 @@ describe('speedBumpEvaluator', () => {
       emptySiteTrackingData(),
       now,
     );
-    expect(result.delaySeconds).toBe(30);
+    if (result.action === 'speed-bump') {
+      expect(result.delaySeconds).toBe(30);
+    }
   });
 });

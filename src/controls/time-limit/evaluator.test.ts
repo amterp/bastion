@@ -39,7 +39,9 @@ describe('timeLimitEvaluator', () => {
     ];
     const result = timeLimitEvaluator.evaluate(makeConfig(), tracking, now);
     expect(result.action).toBe('block');
-    expect(result.reason).toContain('30m');
+    if (result.action === 'block') {
+      expect(result.reason).toContain('30m');
+    }
   });
 
   it('blocks when over the limit', () => {
@@ -57,8 +59,10 @@ describe('timeLimitEvaluator', () => {
       { start: now - 60 * MINUTE, end: now - 30 * MINUTE },
     ];
     const result = timeLimitEvaluator.evaluate(makeConfig(), tracking, now);
-    expect(result.resetsAt).toBeDefined();
-    expect(result.resetsAt!).toBeGreaterThan(now);
+    expect(result.action).toBe('block');
+    if (result.action === 'block') {
+      expect(result.resetsAt).toBeGreaterThan(now);
+    }
   });
 
   it('ignores time outside the window', () => {
