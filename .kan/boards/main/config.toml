@@ -7,19 +7,19 @@ default_column = "backlog"
   name = "backlog"
   color = "#6b7280"
   limit = 0
-  card_ids = ["a_khQzJMAD", "a_khQzLx2E", "a_khQzNLJl", "a_khQzQytE", "a_khQzTYzB", "a_khQzVsK6", "a_khQzZD6f", "a_khQzbOiK"]
+  card_ids = ["a_khQzLx2E", "a_khQzNLJl", "a_khQzQytE", "a_khQzTYzB", "a_khQzVsK6", "a_khQzZD6f", "a_khQzbOiK"]
 
 [[columns]]
   name = "doing"
   color = "#3b82f6"
   limit = 0
-  card_ids = ["a_khQzHB2d"]
+  card_ids = ["a_khQzJMAD"]
 
 [[columns]]
   name = "done"
   color = "#f59e0b"
   limit = 0
-  card_ids = ["a_khQzE7A8"]
+  card_ids = ["a_khQzHB2d", "a_khQzE7A8"]
 
 [custom_fields]
   [custom_fields.type]
