@@ -8,10 +8,72 @@
 </head>
 <body>
   <div class="container">
-    <h1>Bastion Settings</h1>
-    <div id="content">
-      <p>Configuration coming soon.</p>
-    </div>
+    <header>
+      <h1>Bastion</h1>
+      <p class="subtitle">Site Controls</p>
+    </header>
+
+    <div id="sites-list"></div>
+
+    <button id="add-site" class="btn-primary">+ Add Site</button>
+
+    <template id="site-card-template">
+      <div class="site-card">
+        <div class="site-header">
+          <input type="text" class="domain-input" placeholder="reddit.com" />
+          <label class="toggle">
+            <input type="checkbox" class="site-enabled" checked />
+            <span class="toggle-slider"></span>
+          </label>
+          <button class="btn-icon btn-delete-site" title="Delete site">&times;</button>
+        </div>
+        <div class="controls-list"></div>
+        <button class="btn-secondary btn-add-control">+ Add Control</button>
+      </div>
+    </template>
+
+    <template id="control-card-template">
+      <div class="control-card">
+        <div class="control-header">
+          <select class="control-type">
+            <option value="time-limit">Time Limit</option>
+            <option value="nav-frequency">Nav Frequency</option>
+            <option value="degradation">Degradation</option>
+            <option value="speed-bump">Speed Bump</option>
+          </select>
+          <label class="toggle">
+            <input type="checkbox" class="control-enabled" checked />
+            <span class="toggle-slider"></span>
+          </label>
+          <button class="btn-icon btn-delete-control" title="Remove control">&times;</button>
+        </div>
+        <div class="control-fields"></div>
+        <details class="bypass-section">
+          <summary>Bypass Policy</summary>
+          <div class="bypass-fields">
+            <label class="toggle bypass-toggle">
+              <input type="checkbox" class="bypass-enabled" />
+              <span class="toggle-slider"></span>
+              <span>Enable bypass</span>
+            </label>
+            <div class="bypass-config" style="display:none">
+              <div class="field-row">
+                <label>Max bypasses</label>
+                <input type="number" class="bypass-max" value="3" min="1" />
+              </div>
+              <div class="field-row">
+                <label>Per (minutes)</label>
+                <input type="number" class="bypass-window" value="1440" min="1" />
+              </div>
+              <div class="field-row">
+                <label>Duration (minutes)</label>
+                <input type="number" class="bypass-duration" value="5" min="1" />
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </template>
   </div>
   <script src="options.js" type="module"></script>
 </body>

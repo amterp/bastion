@@ -34,12 +34,46 @@ async function getConfigs(): Promise<SiteConfig[]> {
   return cachedConfigs;
 }
 
-// Invalidate cache when storage changes
+// Invalidate cache and re-register content scripts when config changes
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes['bastion_site_configs']) {
     cachedConfigs = null;
+    registerDegradationContentScripts();
   }
 });
+
+/** Dynamically register the degradation content script for configured domains */
+async function registerDegradationContentScripts(): Promise<void> {
+  // Unregister existing
+  try {
+    await chrome.scripting.unregisterContentScripts({ ids: ['bastion-degradation'] });
+  } catch {
+    // May not exist yet
+  }
+
+  const configs = await getConfigs();
+  const patterns = configs
+    .filter((c) => c.enabled && c.controls.some((ctrl) => ctrl.type === 'degradation' && ctrl.enabled))
+    .map((c) => {
+      // Convert domain pattern to match pattern
+      const domain = c.domainPattern;
+      if (domain.startsWith('*.')) return `*://${domain}/*`;
+      return `*://*.${domain}/*`;
+    });
+
+  if (patterns.length === 0) return;
+
+  try {
+    await chrome.scripting.registerContentScripts([{
+      id: 'bastion-degradation',
+      matches: patterns,
+      js: ['content/degradation.js'],
+      runAt: 'document_idle',
+    }]);
+  } catch (e) {
+    console.error('Failed to register content scripts:', e);
+  }
+}
 
 // --- Navigation interception ---
 
@@ -171,5 +205,6 @@ chrome.runtime.onInstalled.addListener(() => {
 // and ensure alarms are set up (they may not persist across restarts)
 recoverOrphanedSession(Date.now());
 setupAlarms();
+registerDegradationContentScripts();
 
 console.log('Bastion service worker initialized');
