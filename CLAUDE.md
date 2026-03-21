@@ -1,33 +1,83 @@
 # Bastion
 
-Chromium extension (Manifest V3) for focus and habit-breaking. Targets Edge.
+Chromium extension (Manifest V3) for breaking compulsive browsing habits
+through graduated friction. Targets Edge, works in any Chromium browser.
 
-## Build
+## Project ethos
+
+Bastion is protective, not punitive. It adds friction to unconscious
+browsing habits - it doesn't shame or lock the user out entirely. The
+design philosophy is:
+
+- **Friction over punishment** - speed bumps, time budgets, grayscale;
+  not just hard blocks
+- **Graduated responses** - different habits need different tools,
+  and controls can be layered independently per site
+- **Self-compassion** - bypass policies exist because perfection isn't
+  the goal; making the unconscious conscious is
+- **Calm UX** - Stone & Sage palette (warm grays, muted green); the
+  blocked page should feel like a gentle wall, not a siren
+
+When making design decisions, lean toward the option that respects the
+user's autonomy while still providing meaningful friction.
+
+## Build & test
 
 ```sh
 npm run build       # Build to dist/
 npm run watch       # Watch mode
-npm run typecheck   # Type check (no emit)
-npm run test        # Run tests
+npm run typecheck   # Type check (tsc --noEmit)
+npm run test        # Run vitest
 ```
 
-## Load in browser
-
-1. Go to `edge://extensions`
-2. Enable Developer mode
-3. Load unpacked from `dist/`
+Load in browser: `edge://extensions` -> Developer mode -> Load unpacked
+from `dist/`.
 
 ## Architecture
 
-- `src/background/` - Service worker (MV3)
-- `src/content/` - Content scripts (experience degradation)
-- `src/controls/` - Pluggable control system (evaluators are pure functions)
-- `src/storage/` - Chrome storage abstraction
-- `src/shared/` - Types, utilities
-- `src/ui/` - Extension pages (popup, options, blocked, speed-bump)
-- `static/` - manifest.json, icons (copied to dist)
+- `src/background/` - MV3 service worker: navigation interception, time
+  tracking (with 1-min heartbeat), alarm handler
+- `src/content/` - Content scripts injected dynamically for degradation
+- `src/controls/` - Pluggable control system. Each evaluator is a pure
+  function: `(config, trackingData, now) => ControlResult`. No Chrome
+  API calls in evaluators - they're trivially testable.
+- `src/storage/` - Chrome storage abstraction. Tracking store writes go
+  through an async mutex (`withTrackingStore`) to prevent concurrent
+  event handlers from clobbering each other.
+- `src/shared/` - Types (discriminated unions for configs, results, and
+  messages), time/URL utilities, constants
+- `src/ui/` - Extension pages: popup, options, blocked, speed-bump
+- `static/` - manifest.json, icons (copied to dist by esbuild config)
+
+## Key patterns
+
+- **Discriminated unions everywhere** - `ControlConfig`, `ControlResult`,
+  `DegradationTrigger`, `BastionMessage` all use TypeScript discriminated
+  unions for compile-time safety
+- **Pure evaluators** - Control logic is separated from Chrome APIs so it
+  can be unit tested without mocking
+- **Domain-based matching** - `matchesDomainPattern("reddit.com")` matches
+  `reddit.com`, `www.reddit.com`, `old.reddit.com`. Speed bump clearances
+  are also domain-based (not exact URL) to survive redirects.
+- **Serialized storage writes** - The tracking store uses a Promise-chain
+  mutex. Always use `mutateTrackingData()` for atomic read-modify-write.
+
+## Adding a new control type
+
+1. Add the type string to `ControlType` in `src/shared/types.ts`
+2. Create a config interface extending `ControlConfigBase`
+3. Create an evaluator implementing `ControlEvaluator` in
+   `src/controls/<name>/evaluator.ts`
+4. Register it in `src/controls/init.ts`
+5. Add UI rendering in `src/ui/options/options.ts` (`renderControlFields`
+   and `defaultControl`)
 
 ## Tech stack
 
-TypeScript + vanilla DOM. esbuild for bundling. vitest for testing.
-No runtime dependencies.
+TypeScript (strict), vanilla DOM, esbuild, vitest.
+No runtime dependencies. No UI framework.
+
+## Tracking
+
+Kan board in `.kan/` tracks implementation phases. Use `kan list` to see
+status.
