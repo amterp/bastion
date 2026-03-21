@@ -1,22 +1,16 @@
 # Bastion
 
-A Chromium browser extension that helps you break compulsive browsing habits through graduated friction - not punishment.
-
-## Why
-
-You open a new tab. You type "red". You press enter. Reddit loads. You didn't even want to check Reddit - your fingers just did it. Five minutes later, you do it again. And again.
-
-Bastion exists because the problem isn't willpower - it's muscle memory. Traditional site blockers treat browsing like an on/off switch: allowed or forbidden. But habits live in the gray area. Sometimes you *do* want to check Reddit - just not for the fifteenth time today.
+A Chromium browser extension that helps you stay focused and break bad browsing habits - like checking Reddit every five minutes - through graduated friction rather than hard blocking.
 
 ## Philosophy
 
-**Friction over punishment.** Bastion doesn't shame you or lock you out entirely (unless you want that). It adds friction at the moments where autopilot takes over - a countdown before the page loads, a time budget that makes you conscious of usage, a grayscale filter that makes doomscrolling less appealing after dark.
+**Friction over punishment.** Bastion adds friction where autopilot takes over - a countdown before a page loads, a time budget that keeps you aware of usage, a grayscale filter that makes a site less appealing after dark. It doesn't shame you or lock you out entirely (unless you want that).
 
-**Graduated responses.** Different problems need different tools. A hard time limit works for sites you genuinely overuse. A speed bump works for sites you visit compulsively but briefly. Grayscale works for sites that are fine during the day but toxic at night. Bastion lets you layer these independently.
+**Graduated responses.** Different habits need different tools. A hard time limit works for sites you genuinely overuse. A speed bump works for sites you visit compulsively but briefly. Grayscale works for sites that are fine during the day but toxic at night. These can be layered independently.
 
-**Self-compassion built in.** Every control can have a bypass policy - a limited number of "I really need this right now" escapes per day. The goal isn't perfection. It's making the unconscious conscious, so you're choosing to browse rather than sleepwalking into it.
+**Bypasses built in.** Every control can have a bypass policy - a limited number of escapes per day. The goal isn't perfection, it's keeping you on track.
 
-**Calm, not hostile.** The UI is deliberately understated (warm stone grays, muted sage green). When Bastion blocks you, it should feel like a gentle wall, not a siren. You're not in trouble - you're being reminded of a boundary you set for yourself.
+**Calm, not hostile.** The UI is deliberately understated. When Bastion blocks you, it should feel like a gentle wall, not a siren - a reminder of a boundary you set for yourself.
 
 ## Controls
 

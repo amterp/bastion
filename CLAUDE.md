@@ -1,25 +1,23 @@
 # Bastion
 
-Chromium extension (Manifest V3) for breaking compulsive browsing habits
-through graduated friction. Targets Edge, works in any Chromium browser.
+Chromium extension (Manifest V3) for staying focused and breaking bad
+browsing habits through graduated friction. Targets Edge, works in any
+Chromium browser.
 
 ## Project ethos
 
-Bastion is protective, not punitive. It adds friction to unconscious
-browsing habits - it doesn't shame or lock the user out entirely. The
-design philosophy is:
+Bastion helps users stay on track. The design philosophy is:
 
 - **Friction over punishment** - speed bumps, time budgets, grayscale;
   not just hard blocks
 - **Graduated responses** - different habits need different tools,
   and controls can be layered independently per site
-- **Self-compassion** - bypass policies exist because perfection isn't
-  the goal; making the unconscious conscious is
+- **Bypasses built in** - perfection isn't the goal; staying on track is
 - **Calm UX** - Stone & Sage palette (warm grays, muted green); the
   blocked page should feel like a gentle wall, not a siren
 
-When making design decisions, lean toward the option that respects the
-user's autonomy while still providing meaningful friction.
+When making design decisions, lean toward respecting the user's autonomy
+while still providing meaningful friction.
 
 ## Build & test
 
