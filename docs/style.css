@@ -146,6 +146,14 @@ strong {
   font-weight: 700;
   color: var(--accent-green);
   letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.nav-logo-img {
+  height: 28px;
+  width: 28px;
 }
 
 .nav-logo:hover {
@@ -212,6 +220,14 @@ strong {
     transparent 70%
   );
   pointer-events: none;
+}
+
+.hero-logo {
+  width: 120px;
+  height: 120px;
+  margin-bottom: var(--space-lg);
+  position: relative;
+  filter: drop-shadow(0 4px 24px var(--accent-green-glow));
 }
 
 .hero-brand {

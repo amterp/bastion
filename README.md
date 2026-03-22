@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/bastion-logo-master.png" alt="Bastion" width="128">
+</p>
+
 # Bastion
 
 A Chromium browser extension that helps you stay focused and break bad browsing habits - like checking Reddit every five minutes - through graduated friction rather than hard blocking.

@@ -20,6 +20,17 @@ header {
   margin-bottom: 32px;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  width: 40px;
+  height: 40px;
+}
+
 h1 {
   font-size: 28px;
   font-weight: 700;
