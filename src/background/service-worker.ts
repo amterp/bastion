@@ -182,6 +182,21 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   await onNavigationCommitted(details.tabId, details.url, configs, Date.now());
 });
 
+// When a link opens a new tab (middle-click, Ctrl+click, target="_blank"),
+// pre-populate the new tab's domain from the source tab. This way
+// onCommitted sees "same domain" and doesn't count it as a fresh visit.
+chrome.webNavigation.onCreatedNavigationTarget.addListener(async (details) => {
+  const sourceDomain = getTabDomain(details.sourceTabId);
+  if (!sourceDomain) return;
+
+  const configs = await getConfigs();
+  const targetDomain = resolveUrlDomain(details.url, configs);
+
+  if (targetDomain === sourceDomain) {
+    setTabDomain(details.tabId, sourceDomain);
+  }
+});
+
 // --- Time tracking events ---
 
 chrome.tabs.onActivated.addListener(async (activeInfo) => {

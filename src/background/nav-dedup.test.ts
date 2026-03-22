@@ -67,4 +67,19 @@ describe('tab domain tracking', () => {
     expect(getTabDomain(1)).toBe('reddit.com');
     expect(getTabDomain(2)).toBe('youtube.com');
   });
+
+  it('pre-populated tab is not a fresh navigation (middle-click scenario)', () => {
+    // Tab 1 is on reddit.com. User middle-clicks a Reddit link,
+    // opening tab 2. We pre-populate tab 2 with the source domain.
+    setTabDomain(1, 'reddit.com');
+    setTabDomain(2, 'reddit.com'); // pre-populated from source tab
+    expect(isFreshNavigation(getTabDomain(2), 'reddit.com')).toBe(false);
+  });
+
+  it('pre-populated tab to different domain still counts', () => {
+    // Tab 1 is on reddit.com. User middle-clicks a YouTube link.
+    // We don't pre-populate (domains differ), so tab 2 has no domain.
+    setTabDomain(1, 'reddit.com');
+    expect(isFreshNavigation(getTabDomain(2), 'youtube.com')).toBe(true);
+  });
 });
