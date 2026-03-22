@@ -105,9 +105,54 @@ static/             manifest.json, icons (copied to dist/)
 - **Vanilla DOM** - No framework for the UI pages
 - **Manifest V3** - Modern Chromium extension APIs
 
-## Status
+## Dev script
 
-Early development. Core functionality works. Not yet published to any extension store.
+A [Rad](https://github.com/amterp/rad) script (`dev`) provides common
+development commands:
+
+```sh
+rad dev build      # Build to dist/
+rad dev test       # Run vitest
+rad dev check      # TypeScript type check
+rad dev zip        # Build + zip to build/bastion.zip
+rad dev release <version>  # Full release pipeline (see below)
+```
+
+## Releasing
+
+Releases are published to the
+[Chrome Web Store](https://chromewebstore.google.com/) via the CWS API.
+The `rad dev release` command automates the entire process:
+
+1. Validates that the working directory is clean
+2. Bumps the version in `manifest.json` and `package.json`
+3. Runs type checking, tests, and build
+4. Creates `build/bastion.zip`
+5. Shows a summary and asks for confirmation
+6. Uploads the zip to the Chrome Web Store
+7. Publishes the new version
+8. Commits the version bump, tags, and pushes
+
+```sh
+rad dev release 1.1.0
+```
+
+### Credentials
+
+The release command requires four environment variables. These are
+stored in `~/.secrets` (sourced by the shell, not checked into git):
+
+| Variable | Description |
+|---|---|
+| `CWS_CLIENT_ID` | Google OAuth client ID |
+| `CWS_CLIENT_SECRET` | Google OAuth client secret |
+| `CWS_REFRESH_TOKEN` | OAuth refresh token for CWS API access |
+| `CWS_EXTENSION_ID` | 32-character Chrome Web Store extension ID |
+
+These credentials come from a Google Cloud project with the Chrome Web
+Store API enabled. The OAuth client is configured as a "Web application"
+with `https://example.com` as the redirect URI. The refresh token is
+obtained through a one-time OAuth authorization code flow.
 
 ## Project tracking
 

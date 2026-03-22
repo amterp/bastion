@@ -49,10 +49,11 @@ fn do_check():
 
 fn do_zip():
     do_build()
-    quiet $`rm -f bastion.zip` catch:
+    $`mkdir -p build`
+    quiet $`rm -f build/bastion.zip` catch:
         pass
-    $`cd dist && zip -r ../bastion.zip . -x "*.DS_Store"`
-    print("Created bastion.zip")
+    $`cd dist && zip -r ../build/bastion.zip . -x "*.DS_Store"`
+    print("Created build/bastion.zip")
 
 fn do_release():
     new_version = version
@@ -83,16 +84,17 @@ fn do_release():
     do_build()
 
     // Zip
-    quiet $`rm -f bastion.zip` catch:
+    quiet $`rm -f build/bastion.zip` catch:
         pass
-    $`cd dist && zip -r ../bastion.zip . -x "*.DS_Store"`
+    $`mkdir -p build`
+    $`cd dist && zip -r ../build/bastion.zip . -x "*.DS_Store"`
 
     // Show summary and confirm
     print("")
     print("=== Release Summary ===")
     print("Version:    {new_version}")
     print("Extension:  {extension_id}")
-    print("Artifact:   bastion.zip")
+    print("Artifact:   build/bastion.zip")
     print("")
     print("This will upload and publish to the Chrome Web Store.")
     if not confirm("Proceed? [Y/n] "):
@@ -120,7 +122,7 @@ fn do_release():
     $`git push && git push --tags`
 
     // Clean up
-    quiet $`rm -f bastion.zip` catch:
+    quiet $`rm -f build/bastion.zip` catch:
         pass
 
     print("")
@@ -168,7 +170,7 @@ fn get_access_token(client_id, client_secret, refresh_token):
 
 fn upload_to_cws(extension_id, access_token):
     // Use curl for the file upload - Rad's http_put doesn't support file bodies
-    cmd = "curl -s -w '\\n%\{http_code\}' -H 'Authorization: Bearer {access_token}' -H 'x-goog-api-version: 2' -X PUT -T bastion.zip 'https://www.googleapis.com/upload/chromewebstore/v1.1/items/{extension_id}'"
+    cmd = "curl -s -w '\\n%\{http_code\}' -H 'Authorization: Bearer {access_token}' -H 'x-goog-api-version: 2' -X PUT -T build/bastion.zip 'https://www.googleapis.com/upload/chromewebstore/v1.1/items/{extension_id}'"
     code, stdout = quiet $`{cmd}` catch:
         print_err("Upload request failed (exit code {code}).")
         exit(1)

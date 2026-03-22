@@ -22,14 +22,22 @@ while still providing meaningful friction.
 ## Build & test
 
 ```sh
-npm run build       # Build to dist/
-npm run watch       # Watch mode
-npm run typecheck   # Type check (tsc --noEmit)
-npm run test        # Run vitest
+rad dev build      # Build to dist/
+rad dev test       # Run vitest
+rad dev check      # TypeScript type check
+rad dev zip        # Build + zip to build/bastion.zip
+npm run watch      # Watch mode (for development)
 ```
 
 Load in browser: `edge://extensions` -> Developer mode -> Load unpacked
 from `dist/`.
+
+## Releasing
+
+Run `rad dev release <version>` to publish to the Chrome Web Store.
+This bumps versions, builds, tests, zips, uploads, publishes, and
+git tags. Requires CWS API credentials in environment variables
+(see README for setup).
 
 ## Architecture
 
