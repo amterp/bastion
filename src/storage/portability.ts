@@ -4,7 +4,7 @@ import type {
   ControlConfig,
   ControlType,
 } from '../shared/types.js';
-import { CONFIG_EXPORT_VERSION } from '../shared/types.js';
+import { CONFIG_EXPORT_VERSION, CONTROL_TYPES } from '../shared/types.js';
 
 // ---------------------------------------------------------------------------
 // Result types
@@ -100,12 +100,6 @@ export function fromBase64Url(b64: string): string {
 // Validation
 // ---------------------------------------------------------------------------
 
-const KNOWN_CONTROL_TYPES: readonly ControlType[] = [
-  'time-limit',
-  'nav-frequency',
-  'degradation',
-  'speed-bump',
-];
 
 function validateAndReturn(data: unknown): ImportResult {
   const result = validateExport(data);
@@ -199,7 +193,7 @@ export function validateControlConfig(data: unknown): string[] {
     errors.push('Missing or invalid enabled field');
   }
 
-  if (!KNOWN_CONTROL_TYPES.includes(obj.type as ControlType)) {
+  if (!CONTROL_TYPES.includes(obj.type as ControlType)) {
     errors.push(`Unknown control type: ${String(obj.type)}`);
     return errors;
   }
@@ -222,6 +216,24 @@ export function validateControlConfig(data: unknown): string[] {
     case 'speed-bump':
       if (typeof obj.delaySeconds !== 'number') errors.push('Missing delaySeconds');
       break;
+  }
+
+  // Validate optional bypass policy
+  if (obj.bypass !== undefined) {
+    if (typeof obj.bypass !== 'object' || obj.bypass === null || Array.isArray(obj.bypass)) {
+      errors.push('bypass must be an object');
+    } else {
+      const bp = obj.bypass as Record<string, unknown>;
+      if (typeof bp.maxBypasses !== 'number') {
+        errors.push('bypass.maxBypasses must be a number');
+      }
+      if (typeof bp.windowMinutes !== 'number') {
+        errors.push('bypass.windowMinutes must be a number');
+      }
+      if (typeof bp.bypassDurationMinutes !== 'number') {
+        errors.push('bypass.bypassDurationMinutes must be a number');
+      }
+    }
   }
 
   return errors;

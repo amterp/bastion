@@ -135,7 +135,9 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 
   // Mark this tab so onCommitted doesn't record a nav entry
   pendingRedirects.add(details.tabId);
-  chrome.tabs.update(details.tabId, { url: redirectUrl });
+  chrome.tabs.update(details.tabId, { url: redirectUrl }).catch(() => {
+    pendingRedirects.delete(details.tabId);
+  });
 });
 
 // Record nav events when navigation commits (for nav-frequency tracking)

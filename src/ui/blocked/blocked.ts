@@ -1,4 +1,6 @@
 import type { ActivateBypassMessage } from '../../shared/messages.js';
+import type { ControlType } from '../../shared/types.js';
+import { CONTROL_TYPES } from '../../shared/types.js';
 
 export {};
 
@@ -9,7 +11,7 @@ const bypassSection = document.getElementById('bypass-section');
 
 // Display reason
 if (reasonEl) {
-  reasonEl.textContent = params.get('reason') || 'This site has been blocked by Bastion.';
+  reasonEl.textContent = params.get('reason') || 'You set a limit for this site.';
 }
 
 // Display reset countdown
@@ -41,9 +43,10 @@ const bypassRemaining = parseInt(params.get('bypassRemaining') || '0', 10);
 const bypassDuration = parseInt(params.get('bypassDuration') || '5', 10);
 const domain = params.get('domain') || '';
 const controlType = params.get('controlType') || '';
+const isValidControlType = CONTROL_TYPES.includes(controlType as ControlType);
 const originalUrl = params.get('originalUrl') || '';
 
-if (bypassSection && bypassAllowed && bypassRemaining > 0) {
+if (bypassSection && bypassAllowed && bypassRemaining > 0 && isValidControlType) {
   const info = document.createElement('p');
   info.className = 'bypass-info';
   info.textContent = `${bypassRemaining} bypass${bypassRemaining !== 1 ? 'es' : ''} remaining (${bypassDuration}m each)`;

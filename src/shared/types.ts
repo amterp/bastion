@@ -4,6 +4,14 @@ export type DomainPattern = string;
 /** Control type identifier */
 export type ControlType = 'time-limit' | 'nav-frequency' | 'degradation' | 'speed-bump';
 
+/** All known control types as a runtime array (mirrors the ControlType union). */
+export const CONTROL_TYPES: readonly ControlType[] = [
+  'time-limit',
+  'nav-frequency',
+  'degradation',
+  'speed-bump',
+] as const;
+
 /** Bypass policy that can be attached to any control */
 export interface BypassPolicy {
   maxBypasses: number;

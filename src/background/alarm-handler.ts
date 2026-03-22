@@ -62,13 +62,14 @@ async function pruneTrackingData(
 ): Promise<void> {
   const maxWindow = computeMaxWindow(configs);
   const store = await loadTrackingStore();
-  let changed = false;
+  let anyChanged = false;
 
   for (const [domain, data] of Object.entries(store)) {
     const prunedTime = pruneTimeEntries(data.timeEntries, maxWindow, now);
     const prunedNav = pruneNavEntries(data.navEntries, maxWindow, now);
 
     // Prune expired bypasses - simply remove entries that have expired
+    let bypassChanged = false;
     const prunedBypasses = { ...data.bypasses };
     const cutoff = now - minutesToMs(maxWindow);
     for (const [type, entries] of Object.entries(prunedBypasses)) {
@@ -76,7 +77,7 @@ async function pruneTrackingData(
         const valid = entries.filter((e) => e.expiresAt > cutoff);
         if (valid.length !== entries.length) {
           prunedBypasses[type as keyof typeof prunedBypasses] = valid;
-          changed = true;
+          bypassChanged = true;
         }
       }
     }
@@ -84,18 +85,17 @@ async function pruneTrackingData(
     const timeChanged = prunedTime.length !== data.timeEntries.length;
     const navChanged = prunedNav.length !== data.navEntries.length;
 
-    // Always write if anything changed (including bypass-only changes)
-    if (timeChanged || navChanged || changed) {
+    if (timeChanged || navChanged || bypassChanged) {
       store[domain] = {
         timeEntries: prunedTime,
         navEntries: prunedNav,
         bypasses: prunedBypasses,
       };
-      changed = true;
+      anyChanged = true;
     }
   }
 
-  if (changed) {
+  if (anyChanged) {
     await saveTrackingStore(store);
   }
 }

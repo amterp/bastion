@@ -264,7 +264,8 @@ function renderControlCard(
     const oldConfig = getConfig();
     const newConfig = defaultControl(newType);
     newConfig.enabled = oldConfig.enabled;
-    newConfig.bypass = oldConfig.bypass;
+    // Don't carry bypass into degradation - it has no effect there
+    newConfig.bypass = newType === 'degradation' ? undefined : oldConfig.bypass;
     siteConfig.controls[controlIndex] = newConfig;
     // Re-render the entire card to avoid stale closures
     renderAllSites();
@@ -289,7 +290,12 @@ function renderControlCard(
   // Control-specific fields
   renderControlFields(card.querySelector('.control-fields')!, getConfig());
 
-  // Bypass section
+  // Bypass section - hidden for degradation (bypasses only apply to blocking controls)
+  const bypassSectionEl = card.querySelector('.bypass-section') as HTMLElement;
+  if (getConfig().type === 'degradation') {
+    bypassSectionEl.style.display = 'none';
+  }
+
   const bypassEnabled = card.querySelector('.bypass-enabled') as HTMLInputElement;
   const bypassConfigEl = card.querySelector('.bypass-config') as HTMLElement;
 

@@ -186,3 +186,8 @@ body.empty #sites-summary {
   color: #8a8680;
   margin-top: 4px;
 }
+
+:focus-visible {
+  outline: 2px solid #6b9b7a;
+  outline-offset: 2px;
+}

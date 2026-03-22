@@ -11,35 +11,44 @@ const messageEl = document.getElementById('message');
 const countdownEl = document.getElementById('countdown');
 const proceedBtn = document.getElementById('proceed') as HTMLButtonElement | null;
 
-if (messageEl) {
-  messageEl.textContent = `Taking a moment before visiting ${domain}...`;
-}
-
-let remaining = delay;
-
-function updateCountdown() {
+if (!targetUrl) {
+  // No target URL - show error, leave proceed button disabled
+  if (messageEl) {
+    messageEl.textContent = 'Something went wrong - no target URL was provided.';
+  }
   if (countdownEl) {
-    countdownEl.textContent = String(remaining);
+    countdownEl.style.display = 'none';
   }
-  if (remaining <= 0 && proceedBtn) {
-    proceedBtn.disabled = false;
-  } else {
-    remaining--;
-    setTimeout(updateCountdown, 1000);
+} else {
+  if (messageEl) {
+    messageEl.textContent = `Taking a moment before visiting ${domain}...`;
   }
-}
 
-updateCountdown();
+  let remaining = delay;
 
-if (proceedBtn && targetUrl) {
-  proceedBtn.addEventListener('click', () => {
-    // Signal the service worker to grant a clearance token by domain, then navigate
-    const msg: SpeedBumpClearedMessage = {
-      type: 'speed-bump-cleared',
-      domain,
-    };
-    chrome.runtime.sendMessage(msg, () => {
-      window.location.href = targetUrl;
+  function updateCountdown() {
+    if (countdownEl) {
+      countdownEl.textContent = String(remaining);
+    }
+    if (remaining <= 0 && proceedBtn) {
+      proceedBtn.disabled = false;
+    } else {
+      remaining--;
+      setTimeout(updateCountdown, 1000);
+    }
+  }
+
+  updateCountdown();
+
+  if (proceedBtn) {
+    proceedBtn.addEventListener('click', () => {
+      const msg: SpeedBumpClearedMessage = {
+        type: 'speed-bump-cleared',
+        domain,
+      };
+      chrome.runtime.sendMessage(msg, () => {
+        window.location.href = targetUrl;
+      });
     });
-  });
+  }
 }

@@ -383,6 +383,64 @@ describe('validateControlConfig', () => {
     });
     expect(errors.some((e) => e.includes('enabled'))).toBe(true);
   });
+
+  it('accepts valid control with bypass policy', () => {
+    expect(
+      validateControlConfig({
+        type: 'time-limit',
+        enabled: true,
+        maxMinutes: 30,
+        windowMinutes: 120,
+        bypass: { maxBypasses: 3, windowMinutes: 1440, bypassDurationMinutes: 5 },
+      }),
+    ).toEqual([]);
+  });
+
+  it('accepts control without bypass policy', () => {
+    expect(
+      validateControlConfig({
+        type: 'time-limit',
+        enabled: true,
+        maxMinutes: 30,
+        windowMinutes: 120,
+      }),
+    ).toEqual([]);
+  });
+
+  it('rejects bypass that is not an object', () => {
+    const errors = validateControlConfig({
+      type: 'time-limit',
+      enabled: true,
+      maxMinutes: 30,
+      windowMinutes: 120,
+      bypass: 'invalid',
+    });
+    expect(errors.some((e) => e.includes('bypass must be an object'))).toBe(true);
+  });
+
+  it('rejects bypass with non-numeric fields', () => {
+    const errors = validateControlConfig({
+      type: 'time-limit',
+      enabled: true,
+      maxMinutes: 30,
+      windowMinutes: 120,
+      bypass: { maxBypasses: 'three', windowMinutes: 'day', bypassDurationMinutes: 'five' },
+    });
+    expect(errors.some((e) => e.includes('bypass.maxBypasses must be a number'))).toBe(true);
+    expect(errors.some((e) => e.includes('bypass.windowMinutes must be a number'))).toBe(true);
+    expect(errors.some((e) => e.includes('bypass.bypassDurationMinutes must be a number'))).toBe(true);
+  });
+
+  it('rejects bypass with missing fields', () => {
+    const errors = validateControlConfig({
+      type: 'time-limit',
+      enabled: true,
+      maxMinutes: 30,
+      windowMinutes: 120,
+      bypass: {},
+    });
+    expect(errors).toHaveLength(3);
+  });
 });
 
 // ---------------------------------------------------------------------------

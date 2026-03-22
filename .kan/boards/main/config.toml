@@ -20,13 +20,14 @@ default_column = "backlog-lo"
   color = "#f59e0b"
   description = "Ready to be picked up next"
   limit = 5
-  card_ids = ["a_kk8AgqgY", "a_kkC0Bw5A", "a_l5V9eJqG"]
+  card_ids = ["a_kk8AgqgY", "a_kkC0Bw5A"]
 
 [[columns]]
   name = "in-progress"
   color = "#10b981"
   description = "Currently being worked on"
   limit = 5
+  card_ids = ["a_l5V9eJqG"]
 
 [[columns]]
   name = "done"

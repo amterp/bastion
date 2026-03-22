@@ -2,14 +2,13 @@
   "manifest_version": 3,
   "name": "Bastion",
   "version": "0.1.0",
-  "description": "Focus and habit-breaking tool",
+  "description": "Stay focused with graduated friction - time limits, visit caps, speed bumps, and grayscale. Gentle nudges, not hard blocks.",
   "permissions": [
     "storage",
     "alarms",
     "webNavigation",
     "tabs",
-    "scripting",
-    "activeTab"
+    "scripting"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {

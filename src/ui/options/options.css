@@ -70,7 +70,13 @@ h1 {
   font-weight: 600;
 }
 
-.domain-input:focus {
+.domain-input:focus-visible {
+  outline: 2px solid #6b9b7a;
+  outline-offset: -2px;
+  border-color: #6b9b7a;
+}
+
+.domain-input:focus:not(:focus-visible) {
   outline: none;
   border-color: #6b9b7a;
 }
@@ -161,8 +167,15 @@ h1 {
   color: #8a8680;
 }
 
-.field-row input:focus,
-.field-row select:focus {
+.field-row input:focus-visible,
+.field-row select:focus-visible {
+  outline: 2px solid #6b9b7a;
+  outline-offset: -2px;
+  border-color: #6b9b7a;
+}
+
+.field-row input:focus:not(:focus-visible),
+.field-row select:focus:not(:focus-visible) {
   outline: none;
   border-color: #6b9b7a;
 }
@@ -388,7 +401,13 @@ h1 {
   box-sizing: border-box;
 }
 
-.modal-body textarea:focus {
+.modal-body textarea:focus-visible {
+  outline: 2px solid #6b9b7a;
+  outline-offset: -2px;
+  border-color: #6b9b7a;
+}
+
+.modal-body textarea:focus:not(:focus-visible) {
   outline: none;
   border-color: #6b9b7a;
 }
@@ -453,4 +472,10 @@ h1 {
 
 .modal-actions .btn-modal-confirm:hover {
   background: #5a8a69;
+}
+
+/* Keyboard focus ring for all interactive elements */
+:focus-visible {
+  outline: 2px solid #6b9b7a;
+  outline-offset: 2px;
 }
