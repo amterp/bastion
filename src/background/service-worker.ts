@@ -135,7 +135,13 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     return;
   }
 
-  // Mark this tab so onCommitted doesn't record a nav entry
+  // Mark this tab so onCommitted doesn't record a nav entry.
+  // Note: there's a race here - onCommitted may fire before we reach
+  // this line (the async evaluation above yields multiple times). If
+  // that happens, the nav entry gets recorded even though the nav will
+  // be redirected. The impact is minor: one extra count for a blocked
+  // visit. Fixing this properly would require restructuring the
+  // evaluation to be synchronous or deferring recording.
   pendingRedirects.add(details.tabId);
   chrome.tabs.update(details.tabId, { url: redirectUrl }).catch(() => {
     pendingRedirects.delete(details.tabId);
@@ -145,15 +151,17 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 // Record nav events when navigation commits (for nav-frequency tracking)
 chrome.webNavigation.onCommitted.addListener(async (details) => {
   if (details.frameId !== 0) return;
-  if (details.url.startsWith(chrome.runtime.getURL(''))) return;
 
-  // Don't record nav entries for navigations we're about to redirect.
-  // Don't update tabDomains either - the tab stays at its previous
-  // domain since the navigation was canceled.
+  // Clean up pendingRedirects before the extension URL check. Otherwise,
+  // onCommitted for a redirect to our blocked/speed-bump page would exit
+  // early (extension URL) without clearing the entry, leaving a stale
+  // pendingRedirects that silently drops the next navigation on this tab.
   if (pendingRedirects.has(details.tabId)) {
     pendingRedirects.delete(details.tabId);
     return;
   }
+
+  if (details.url.startsWith(chrome.runtime.getURL(''))) return;
 
   const configs = await getConfigs();
   const newDomain = resolveUrlDomain(details.url, configs);
