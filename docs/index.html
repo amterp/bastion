@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Bastion - A browser extension that helps you stay focused through graduated friction, not hard blocking.">
+  <title>Bastion - Stay Focused</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">Bastion</a>
+      <ul class="nav-links">
+        <li><a href="#philosophy">Philosophy</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#guide">Guide</a></li>
+        <li><a href="#install" class="nav-cta">Install</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- Hero -->
+    <section id="hero" class="hero">
+      <div class="container">
+        <p class="hero-brand">Bastion</p>
+        <h1 class="hero-title">Stay focused.<br>Break the loop.</h1>
+        <p class="hero-subtitle">
+          Bastion is a browser extension that adds friction where autopilot
+          takes over - speed bumps, time budgets, grayscale filters. Not
+          hard blocks. Just enough resistance to break compulsive habits.
+        </p>
+        <div class="hero-actions">
+          <a href="#install" class="btn btn-primary">Get Bastion</a>
+          <a href="#features" class="btn btn-secondary">See how it works</a>
+        </div>
+        <p class="hero-compat">For Chrome, Edge, and other Chromium browsers</p>
+      </div>
+    </section>
+
+    <!-- Philosophy -->
+    <section id="philosophy" class="philosophy">
+      <div class="container">
+        <h2 class="section-title">A different approach to focus</h2>
+        <p class="section-intro">
+          Most blockers treat you like you can't be trusted. Bastion treats
+          you like someone who set a boundary and needs a gentle reminder
+          to respect it.
+        </p>
+        <div class="philosophy-grid">
+          <div class="philosophy-card">
+            <div class="philosophy-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-9 6 18 3-9h4"/></svg>
+            </div>
+            <h3>Friction, not punishment</h3>
+            <p>
+              Speed bumps and time budgets instead of hard locks. You always
+              have a way through - but you have to be intentional about it.
+            </p>
+          </div>
+          <div class="philosophy-card">
+            <div class="philosophy-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </div>
+            <h3>Graduated responses</h3>
+            <p>
+              Different habits need different tools. A compulsive checker
+              needs a speed bump. A time sink needs a budget. Layer them
+              independently per site.
+            </p>
+          </div>
+          <div class="philosophy-card">
+            <div class="philosophy-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </div>
+            <h3>Calm, not hostile</h3>
+            <p>
+              When Bastion steps in, it feels like a gentle wall - a
+              reminder of a boundary you set for yourself. No shame,
+              no sirens.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="features">
+      <div class="container">
+        <h2 class="section-title">Four tools, one goal</h2>
+        <p class="section-intro">
+          Each site gets its own combination of controls. Use one, use all
+          four - whatever fits the habit you're working on.
+        </p>
+
+        <div class="features-list">
+
+          <div class="feature-card time-limit">
+            <span class="feature-badge time-limit">Time Limit</span>
+            <h3>Cap your time</h3>
+            <p>
+              Set a rolling time budget - like 30 minutes per 2 hours.
+              When you hit the limit, Bastion blocks the site until enough
+              time rolls off the window. You decide how much is enough.
+            </p>
+            <div class="feature-example">
+              <span class="example-label">Example</span>
+              <span>30 min per 2-hour window on reddit.com</span>
+            </div>
+          </div>
+
+          <div class="feature-card nav-frequency">
+            <span class="feature-badge nav-frequency">Nav Frequency</span>
+            <h3>Limit the visits</h3>
+            <p>
+              Targets the "open new tab, type URL" reflex. Cap how many
+              times you can navigate to a site within a rolling window.
+              Great for sites you visit briefly but compulsively.
+            </p>
+            <div class="feature-example">
+              <span class="example-label">Example</span>
+              <span>3 visits per hour to instagram.com</span>
+            </div>
+          </div>
+
+          <div class="feature-card speed-bump">
+            <span class="feature-badge speed-bump">Speed Bump</span>
+            <h3>Pause before loading</h3>
+            <p>
+              A countdown page before the site loads. Pure friction -
+              no blocking. Just enough of a pause to ask yourself
+              "do I actually need this right now?"
+            </p>
+            <div class="feature-example">
+              <span class="example-label">Example</span>
+              <span>10-second countdown before news.ycombinator.com</span>
+            </div>
+          </div>
+
+          <div class="feature-card degradation">
+            <span class="feature-badge degradation">Degradation</span>
+            <h3>Make it less appealing</h3>
+            <p>
+              Apply a grayscale filter based on time of day or time spent
+              on the site. Everything still works - it just stops being
+              as fun. A subtle nudge that the fun part is over.
+            </p>
+            <div class="feature-example">
+              <span class="example-label">Example</span>
+              <span>Grayscale on instagram.com after 9 PM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Guide -->
+    <section id="guide" class="guide">
+      <div class="container">
+        <h2 class="section-title">Getting started</h2>
+
+        <div class="guide-block" id="install">
+          <h3>Installation</h3>
+          <p class="coming-soon-note">
+            Chrome Web Store listing coming soon. For now, you can install
+            from source.
+          </p>
+          <ol class="guide-steps">
+            <li>Clone the repository and run <code>npm install &amp;&amp; npm run build</code></li>
+            <li>Open <code>edge://extensions</code> or <code>chrome://extensions</code></li>
+            <li>Enable <strong>Developer mode</strong></li>
+            <li>Click <strong>Load unpacked</strong> and select the <code>dist/</code> folder</li>
+            <li>Pin Bastion to your toolbar</li>
+          </ol>
+        </div>
+
+        <div class="guide-block" id="configuring-sites">
+          <h3>Adding &amp; configuring sites</h3>
+          <p>
+            Click the Bastion icon in your toolbar, then the gear icon to open
+            Settings. Click <strong>+ Add Site</strong>, type a domain pattern
+            (like <code>reddit.com</code>), and start adding controls.
+          </p>
+          <p>
+            Domain patterns match the domain and all its subdomains -
+            <code>reddit.com</code> also covers <code>www.reddit.com</code>
+            and <code>old.reddit.com</code>. Each site is configured
+            independently with its own set of controls.
+          </p>
+        </div>
+
+        <div class="guide-block" id="controls-detail">
+          <h3>Control types in detail</h3>
+
+          <div class="guide-detail">
+            <h4>Time Limit</h4>
+            <p>
+              Configure <strong>max time</strong> (how long you can spend) and
+              <strong>window</strong> (the rolling period it's measured over).
+              When you hit the limit, Bastion redirects to a blocked page that
+              shows when access resets. Time tracking uses a 1-minute heartbeat,
+              so usage is accurate to the minute.
+            </p>
+          </div>
+
+          <div class="guide-detail">
+            <h4>Nav Frequency</h4>
+            <p>
+              Configure <strong>max visits</strong> and <strong>window</strong>.
+              Each navigation to the domain counts as one visit. Particularly
+              useful for sites where the problem is how often you go there, not
+              how long you stay.
+            </p>
+          </div>
+
+          <div class="guide-detail">
+            <h4>Speed Bump</h4>
+            <p>
+              Configure the <strong>delay</strong> in seconds. A countdown page
+              appears before the site loads. After the countdown finishes, click
+              Proceed to continue. There is no limit on how many times you can
+              proceed - the friction is the point.
+            </p>
+          </div>
+
+          <div class="guide-detail">
+            <h4>Degradation</h4>
+            <p>
+              Choose a <strong>trigger type</strong>: time of day (e.g. after
+              9 PM) or cumulative time on site (e.g. after 10 minutes today).
+              Currently applies a grayscale filter. The site remains fully
+              functional - just less visually stimulating.
+            </p>
+          </div>
+        </div>
+
+        <div class="guide-block" id="bypasses">
+          <h3>Bypass system</h3>
+          <p>
+            Any control except degradation can have an optional bypass policy.
+            Configure how many bypasses you get per time window and how long
+            each bypass lasts. When a control blocks you, the blocked page
+            shows a bypass button with the remaining count.
+          </p>
+          <p>
+            Bypasses are a release valve, not a backdoor. They exist because
+            perfection isn't the goal - staying on track is. If you need to
+            check something urgently, the option is there. But you have to
+            actively choose it.
+          </p>
+        </div>
+
+        <div class="guide-block" id="import-export">
+          <h3>Import &amp; export</h3>
+          <p>
+            The Settings page has export and import buttons. Export your
+            full configuration as a JSON file or a shareable encoded string.
+            Import supports both formats, with the option to replace your
+            existing config entirely or merge (incoming sites win on domain
+            conflicts).
+          </p>
+          <p>
+            This is useful for backing up your setup, moving to a new
+            machine, or sharing a configuration with someone else.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <p class="footer-name">Bastion</p>
+        <p class="footer-tagline">Stay focused. Break the loop.</p>
+        <a href="https://github.com/amterp/bastion" class="footer-github">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Highlight active nav link based on scroll position
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a:not(.nav-cta)');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => {
+            link.classList.toggle(
+              'active',
+              link.getAttribute('href') === '#' + entry.target.id
+            );
+          });
+        }
+      });
+    }, { rootMargin: '-20% 0px -80% 0px' });
+
+    sections.forEach(section => observer.observe(section));
+  </script>
+
+</body>
+</html>

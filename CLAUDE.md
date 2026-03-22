@@ -75,6 +75,24 @@ from `dist/`.
 TypeScript (strict), vanilla DOM, esbuild, vitest.
 No runtime dependencies. No UI framework.
 
+## Website
+
+`docs/` contains a static single-page website (plain HTML + CSS, no build
+step) intended for GitHub Pages. It documents Bastion's features, philosophy,
+and usage guide.
+
+When making user-facing changes to the extension - adding or modifying
+control types, changing configuration options, adding features, or altering
+behavior - update the website to reflect those changes. The relevant
+sections are in `docs/index.html`:
+
+- **Features** section: control type cards with descriptions and examples
+- **Guide** section: detailed how-to covering installation, configuration,
+  each control type, bypasses, and import/export
+
+The site uses the Stone & Sage palette via CSS custom properties in
+`docs/style.css`.
+
 ## Tracking
 
 This project uses a [Kan](https://github.com/amterp/kan) board in `.kan/`
