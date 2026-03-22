@@ -13,6 +13,18 @@
       <p class="subtitle">Site Controls</p>
     </header>
 
+    <div class="portability-toolbar">
+      <div class="portability-actions">
+        <button id="export-file" class="btn-toolbar" title="Download config as JSON file">Export File</button>
+        <button id="export-string" class="btn-toolbar" title="Copy config as encoded string">Export String</button>
+        <button id="import-file" class="btn-toolbar" title="Import config from JSON file">Import File</button>
+        <button id="import-string" class="btn-toolbar" title="Import config from encoded string">Import String</button>
+      </div>
+      <div id="portability-status" class="portability-status"></div>
+    </div>
+
+    <input type="file" id="import-file-input" accept=".json" style="display:none" />
+
     <div id="sites-list"></div>
 
     <button id="add-site" class="btn-primary">+ Add Site</button>
@@ -55,6 +67,15 @@
             <span>Bypass Policy</span>
           </label>
           <div class="bypass-config" style="display:none"></div>
+        </div>
+      </div>
+    </template>
+    <template id="modal-template">
+      <div class="modal-backdrop">
+        <div class="modal">
+          <p class="modal-message"></p>
+          <div class="modal-body"></div>
+          <div class="modal-actions"></div>
         </div>
       </div>
     </template>

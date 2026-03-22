@@ -2,6 +2,7 @@ import type {
   SiteConfig,
   ControlConfig,
   ControlType,
+  ConfigExport,
   TimeLimitConfig,
   NavFrequencyConfig,
   DegradationConfig,
@@ -9,6 +10,15 @@ import type {
 } from '../../shared/types.js';
 import { isValidDomainPattern } from '../../shared/types.js';
 import { loadSiteConfigs, saveSiteConfigs } from '../../storage/settings.js';
+import {
+  buildExport,
+  exportToJson,
+  exportToEncodedString,
+  importFromJson,
+  importFromEncodedString,
+  mergeConfigs,
+  regenerateIds,
+} from '../../storage/portability.js';
 
 // --- State ---
 
@@ -418,6 +428,243 @@ addSiteBtn.addEventListener('click', () => {
   const lastInput = inputs[inputs.length - 1] as HTMLInputElement;
   lastInput?.focus();
   scheduleSave();
+});
+
+// --- Portability: DOM refs ---
+
+const exportFileBtn = document.getElementById('export-file')!;
+const exportStringBtn = document.getElementById('export-string')!;
+const importFileBtn = document.getElementById('import-file')!;
+const importStringBtn = document.getElementById('import-string')!;
+const importFileInput = document.getElementById('import-file-input') as HTMLInputElement;
+const portabilityStatus = document.getElementById('portability-status')!;
+const modalTemplate = document.getElementById('modal-template') as HTMLTemplateElement;
+
+// --- Portability: status messages ---
+
+let statusTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function showStatus(message: string, type: 'success' | 'error'): void {
+  portabilityStatus.textContent = message;
+  portabilityStatus.className = `portability-status ${type}`;
+  if (statusTimeout) clearTimeout(statusTimeout);
+  statusTimeout = setTimeout(() => {
+    portabilityStatus.textContent = '';
+    portabilityStatus.className = 'portability-status';
+  }, 5000);
+}
+
+// --- Portability: modal helpers ---
+
+function showModal(opts: {
+  message: string;
+  body?: (container: HTMLElement) => void;
+  buttons: { label: string; className: string; onClick: (close: () => void) => void }[];
+}): HTMLElement {
+  const frag = modalTemplate.content.cloneNode(true) as DocumentFragment;
+  const backdrop = frag.querySelector('.modal-backdrop') as HTMLElement;
+  const msgEl = backdrop.querySelector('.modal-message') as HTMLElement;
+  const bodyEl = backdrop.querySelector('.modal-body') as HTMLElement;
+  const actionsEl = backdrop.querySelector('.modal-actions') as HTMLElement;
+
+  msgEl.textContent = opts.message;
+
+  if (opts.body) {
+    opts.body(bodyEl);
+  }
+
+  const close = () => backdrop.remove();
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) close();
+  });
+
+  for (const btn of opts.buttons) {
+    const button = document.createElement('button');
+    button.textContent = btn.label;
+    button.className = btn.className;
+    button.addEventListener('click', () => btn.onClick(close));
+    actionsEl.appendChild(button);
+  }
+
+  document.body.appendChild(backdrop);
+  return backdrop;
+}
+
+type ImportMode = 'replace' | 'merge';
+
+function importModeRadios(container: HTMLElement): () => ImportMode {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'import-mode';
+
+  const makeRadio = (value: ImportMode, label: string, checked: boolean) => {
+    const lbl = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'import-mode';
+    input.value = value;
+    input.checked = checked;
+    lbl.appendChild(input);
+    lbl.appendChild(document.createTextNode(label));
+    wrapper.appendChild(lbl);
+  };
+
+  makeRadio('replace', 'Replace all', true);
+  makeRadio('merge', 'Merge (incoming wins)', false);
+  container.appendChild(wrapper);
+
+  return () => {
+    const selected = wrapper.querySelector('input:checked') as HTMLInputElement;
+    return (selected?.value as ImportMode) ?? 'replace';
+  };
+}
+
+function pluralSite(count: number): string {
+  return `${count} site config${count !== 1 ? 's' : ''}`;
+}
+
+async function applyImport(data: ConfigExport, mode: ImportMode): Promise<void> {
+  if (mode === 'merge') {
+    siteConfigs = mergeConfigs(siteConfigs, data.siteConfigs);
+  } else {
+    siteConfigs = regenerateIds(data.siteConfigs);
+  }
+  await saveSiteConfigs(siteConfigs);
+  renderAllSites();
+  showStatus(`Imported ${pluralSite(data.siteConfigs.length)} (${mode})`, 'success');
+}
+
+function showImportConfirm(data: ConfigExport): void {
+  let getMode: () => ImportMode;
+
+  showModal({
+    message: `Import ${pluralSite(data.siteConfigs.length)}? You currently have ${pluralSite(siteConfigs.length)}.`,
+    body: (container) => {
+      getMode = importModeRadios(container);
+    },
+    buttons: [
+      { label: 'Cancel', className: 'btn-modal-cancel', onClick: (close) => close() },
+      {
+        label: 'Import',
+        className: 'btn-modal-confirm',
+        onClick: (close) => {
+          close();
+          applyImport(data, getMode());
+        },
+      },
+    ],
+  });
+}
+
+// --- Portability: Export handlers ---
+
+exportFileBtn.addEventListener('click', () => {
+  const data = buildExport(siteConfigs);
+  const json = exportToJson(data);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bastion-config-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showStatus('Config exported as file', 'success');
+});
+
+exportStringBtn.addEventListener('click', () => {
+  const data = buildExport(siteConfigs);
+  const encoded = exportToEncodedString(data);
+
+  showModal({
+    message: 'Copy this string to share your config:',
+    body: (container) => {
+      const textarea = document.createElement('textarea');
+      textarea.rows = 4;
+      textarea.readOnly = true;
+      textarea.value = encoded;
+      container.appendChild(textarea);
+      // Select text on focus for easy copying
+      textarea.addEventListener('focus', () => textarea.select());
+      setTimeout(() => textarea.focus(), 50);
+    },
+    buttons: [
+      {
+        label: 'Copy',
+        className: 'btn-modal-confirm',
+        onClick: (close) => {
+          navigator.clipboard.writeText(encoded).then(
+            () => { close(); showStatus('Copied to clipboard', 'success'); },
+            () => showStatus('Failed to copy - please select and copy manually', 'error'),
+          );
+        },
+      },
+      { label: 'Close', className: 'btn-modal-cancel', onClick: (close) => close() },
+    ],
+  });
+});
+
+// --- Portability: Import handlers ---
+
+importFileBtn.addEventListener('click', () => {
+  importFileInput.value = '';
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', () => {
+  const file = importFileInput.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = importFromJson(reader.result as string);
+    if (!result.ok) {
+      showStatus(result.error, 'error');
+      return;
+    }
+    showImportConfirm(result.data);
+  };
+  reader.readAsText(file);
+});
+
+importStringBtn.addEventListener('click', () => {
+  let textarea: HTMLTextAreaElement;
+  let errorEl: HTMLElement;
+
+  showModal({
+    message: 'Paste your encoded config string:',
+    body: (container) => {
+      textarea = document.createElement('textarea');
+      textarea.rows = 4;
+      textarea.placeholder = 'Paste encoded string here...';
+      container.appendChild(textarea);
+
+      errorEl = document.createElement('div');
+      errorEl.className = 'modal-error';
+      container.appendChild(errorEl);
+
+      setTimeout(() => textarea.focus(), 50);
+    },
+    buttons: [
+      { label: 'Cancel', className: 'btn-modal-cancel', onClick: (close) => close() },
+      {
+        label: 'Import',
+        className: 'btn-modal-confirm',
+        onClick: (close) => {
+          const value = textarea.value.trim();
+          if (!value) {
+            errorEl.textContent = 'Please paste a config string';
+            return;
+          }
+          const result = importFromEncodedString(value);
+          if (!result.ok) {
+            errorEl.textContent = result.error;
+            return;
+          }
+          close();
+          showImportConfirm(result.data);
+        },
+      },
+    ],
+  });
 });
 
 // --- Init ---

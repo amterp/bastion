@@ -69,6 +69,16 @@ export interface SiteConfig {
   enabled: boolean;
 }
 
+/** Versioned export envelope for config portability */
+export interface ConfigExport {
+  version: 1;
+  exportedAt: number;
+  siteConfigs: SiteConfig[];
+}
+
+/** Current export format version */
+export const CONFIG_EXPORT_VERSION = 1 as const;
+
 /**
  * Validate a domain pattern. Must contain at least one dot to prevent
  * accidentally matching all sites on a TLD (e.g. "com").
