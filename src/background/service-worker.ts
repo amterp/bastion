@@ -107,45 +107,50 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   // Don't intercept our own extension pages
   if (url.startsWith(chrome.runtime.getURL(''))) return;
 
-  // Check for speed bump clearance by domain
-  const hostname = extractHostname(url);
-  if (hostname) {
-    const configs = await getConfigs();
-    const domainPattern = findMatchingDomainPattern(hostname, configs);
-    if (domainPattern && await hasClearance(domainPattern)) return;
-  }
-
-  const configs = await getConfigs();
-  const evaluation = await handleNavigation(url, configs);
-  if (!evaluation) return;
-
-  const { result, config, bypassInfo } = evaluation;
-
-  let redirectUrl: string;
-  if (result.action === 'block') {
-    redirectUrl = buildBlockedUrl(result, config.domainPattern, url, bypassInfo);
-  } else if (result.action === 'speed-bump') {
-    redirectUrl = buildSpeedBumpUrl(
-      url,
-      result.delaySeconds,
-      config.domainPattern,
-    );
-  } else {
-    // 'degrade' is handled by content scripts, not by redirect
-    return;
-  }
-
-  // Mark this tab so onCommitted doesn't record a nav entry.
-  // Note: there's a race here - onCommitted may fire before we reach
-  // this line (the async evaluation above yields multiple times). If
-  // that happens, the nav entry gets recorded even though the nav will
-  // be redirected. The impact is minor: one extra count for a blocked
-  // visit. Fixing this properly would require restructuring the
-  // evaluation to be synchronous or deferring recording.
+  // Mark this tab eagerly so onCommitted (which may fire while we're
+  // awaiting the evaluation below) doesn't record a nav entry for a
+  // navigation we're about to redirect. The finally block cleans up
+  // if we decide not to redirect, so new early returns are safe.
+  let redirecting = false;
   pendingRedirects.add(details.tabId);
-  chrome.tabs.update(details.tabId, { url: redirectUrl }).catch(() => {
-    pendingRedirects.delete(details.tabId);
-  });
+  try {
+    // Check for speed bump clearance by domain
+    const hostname = extractHostname(url);
+    if (hostname) {
+      const configs = await getConfigs();
+      const domainPattern = findMatchingDomainPattern(hostname, configs);
+      if (domainPattern && await hasClearance(domainPattern)) return;
+    }
+
+    const configs = await getConfigs();
+    const evaluation = await handleNavigation(url, configs);
+    if (!evaluation) return;
+
+    const { result, config, bypassInfo } = evaluation;
+
+    let redirectUrl: string;
+    if (result.action === 'block') {
+      redirectUrl = buildBlockedUrl(result, config.domainPattern, url, bypassInfo);
+    } else if (result.action === 'speed-bump') {
+      redirectUrl = buildSpeedBumpUrl(
+        url,
+        result.delaySeconds,
+        config.domainPattern,
+      );
+    } else {
+      // 'degrade' is handled by content scripts, not by redirect
+      return;
+    }
+
+    redirecting = true;
+    chrome.tabs.update(details.tabId, { url: redirectUrl }).catch(() => {
+      pendingRedirects.delete(details.tabId);
+    });
+  } finally {
+    if (!redirecting) {
+      pendingRedirects.delete(details.tabId);
+    }
+  }
 });
 
 // Record nav events when navigation commits (for nav-frequency tracking)
