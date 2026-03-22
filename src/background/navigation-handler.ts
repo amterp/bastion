@@ -1,4 +1,4 @@
-import type { SiteConfig } from '../shared/types.js';
+import type { DomainPattern, SiteConfig } from '../shared/types.js';
 import { extractHostname, findMatchingSiteConfig, findMatchingDomainPattern } from '../shared/url-utils.js';
 import { getTrackingData, mutateTrackingData, countBypassesInWindow } from '../storage/tracking.js';
 import { evaluateControls } from '../controls/evaluate.js';
@@ -50,21 +50,24 @@ export async function handleNavigation(
 }
 
 /**
- * Record a navigation event for nav-frequency tracking.
- * Only records if the URL matches a configured site.
- * Skips recording if the navigation was to an extension page
- * (the caller should filter those).
+ * Resolve a URL to its matching domain pattern, or null if untracked.
  */
-export async function addNavEntry(
+export function resolveUrlDomain(
   url: string,
   configs: SiteConfig[],
-): Promise<void> {
+): DomainPattern | null {
   const hostname = extractHostname(url);
-  if (!hostname) return;
+  if (!hostname) return null;
+  return findMatchingDomainPattern(hostname, configs);
+}
 
-  const domainPattern = findMatchingDomainPattern(hostname, configs);
-  if (!domainPattern) return;
-
+/**
+ * Record a navigation entry for a domain pattern that has already
+ * been resolved. Prefer this when the caller already knows the domain.
+ */
+export async function recordNavEntry(
+  domainPattern: DomainPattern,
+): Promise<void> {
   await mutateTrackingData(domainPattern, (data) => {
     data.navEntries.push({ timestamp: Date.now() });
   });

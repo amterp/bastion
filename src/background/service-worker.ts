@@ -2,10 +2,12 @@ import { initControls } from '../controls/init.js';
 import { loadSiteConfigs } from '../storage/settings.js';
 import {
   handleNavigation,
-  addNavEntry,
+  recordNavEntry,
+  resolveUrlDomain,
   buildBlockedUrl,
   buildSpeedBumpUrl,
 } from './navigation-handler.js';
+import { isFreshNavigation, getTabDomain, setTabDomain, clearTab } from './nav-dedup.js';
 import { hasClearance, addClearance, recordBypass } from '../storage/tracking.js';
 import { getTrackingData } from '../storage/tracking.js';
 import { SPEED_BUMP_CLEARANCE_TTL_MS } from '../shared/constants.js';
@@ -145,14 +147,23 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   if (details.frameId !== 0) return;
   if (details.url.startsWith(chrome.runtime.getURL(''))) return;
 
-  // Don't record nav entries for navigations we're about to redirect
+  // Don't record nav entries for navigations we're about to redirect.
+  // Don't update tabDomains either - the tab stays at its previous
+  // domain since the navigation was canceled.
   if (pendingRedirects.has(details.tabId)) {
     pendingRedirects.delete(details.tabId);
     return;
   }
 
   const configs = await getConfigs();
-  await addNavEntry(details.url, configs);
+  const newDomain = resolveUrlDomain(details.url, configs);
+  const previousDomain = getTabDomain(details.tabId);
+
+  if (newDomain && isFreshNavigation(previousDomain, newDomain)) {
+    await recordNavEntry(newDomain);
+  }
+
+  setTabDomain(details.tabId, newDomain);
 
   // Also update time tracking when navigation commits
   await onNavigationCommitted(details.tabId, details.url, configs, Date.now());
@@ -166,6 +177,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
 });
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
+  clearTab(tabId);
   await onTabRemoved(tabId, Date.now());
 });
 
