@@ -1,0 +1,218 @@
+#!/usr/bin/env rad
+---
+Bastion development and release CLI.
+---
+
+command build:
+    ---
+    Build extension to dist/.
+    ---
+    calls do_build
+
+command test:
+    ---
+    Run vitest test suite.
+    ---
+    calls do_test
+
+command check:
+    ---
+    Run TypeScript type checking.
+    ---
+    calls do_check
+
+command zip:
+    ---
+    Build and zip for distribution.
+    ---
+    calls do_zip
+
+command release:
+    ---
+    Build, test, and publish a new version to the Chrome Web Store.
+    ---
+    version str  # Version to release (e.g. 1.0.0)
+    calls do_release
+
+fn do_build():
+    print("Building...")
+    $`npm run build`
+    print("Build complete.")
+
+fn do_test():
+    print("Running tests...")
+    $`npm run test`
+
+fn do_check():
+    print("Type checking...")
+    $`npm run typecheck`
+
+fn do_zip():
+    do_build()
+    quiet $`rm -f bastion.zip` catch:
+        pass
+    $`cd dist && zip -r ../bastion.zip . -x "*.DS_Store"`
+    print("Created bastion.zip")
+
+fn do_release():
+    new_version = version
+
+    // Validate credentials early
+    client_id = require_env("CWS_CLIENT_ID")
+    client_secret = require_env("CWS_CLIENT_SECRET")
+    refresh_token = require_env("CWS_REFRESH_TOKEN")
+    extension_id = require_env("CWS_EXTENSION_ID")
+
+    // Check clean git state
+    code, stdout = quiet $`git status --porcelain`
+    if stdout.trim() != "":
+        print_err("Error: working directory is not clean. Commit or stash changes first.")
+        exit(1)
+
+    current = read_current_version()
+    print("Current version: {current}")
+    print("New version:     {new_version}")
+    print("")
+
+    // Bump version
+    bump_version(new_version)
+
+    // Build + test
+    do_check()
+    do_test()
+    do_build()
+
+    // Zip
+    quiet $`rm -f bastion.zip` catch:
+        pass
+    $`cd dist && zip -r ../bastion.zip . -x "*.DS_Store"`
+
+    // Show summary and confirm
+    print("")
+    print("=== Release Summary ===")
+    print("Version:    {new_version}")
+    print("Extension:  {extension_id}")
+    print("Artifact:   bastion.zip")
+    print("")
+    print("This will upload and publish to the Chrome Web Store.")
+    if not confirm("Proceed? [Y/n] "):
+        bump_version(current)
+        print("Release cancelled. Version reverted to {current}.")
+        exit(0)
+
+    // Get access token
+    print("Authenticating with Chrome Web Store...")
+    access_token = get_access_token(client_id, client_secret, refresh_token)
+
+    // Upload
+    print("Uploading...")
+    upload_to_cws(extension_id, access_token)
+
+    // Publish
+    print("Publishing...")
+    publish_to_cws(extension_id, access_token)
+
+    // Git commit + tag
+    print("Committing version bump...")
+    $`git add static/manifest.json package.json`
+    $`git commit -m "Release v{new_version}"`
+    $`git tag "v{new_version}"`
+    $`git push && git push --tags`
+
+    // Clean up
+    quiet $`rm -f bastion.zip` catch:
+        pass
+
+    print("")
+    print("Bastion v{new_version} released!")
+
+// --- Helpers ---
+
+fn require_env(name):
+    val = get_env(name)
+    if not val:
+        print_err("Error: {name} environment variable is not set.")
+        print_err("Add it to ~/.secrets:")
+        print_err("  export {name}='your-value-here'")
+        exit(1)
+    return val
+
+fn read_current_version():
+    content = read_file("static/manifest.json").content
+    data = parse_json(content)
+    return data["version"]
+
+fn bump_version(new_version):
+    manifest = read_file("static/manifest.json").content
+    manifest = replace(manifest, '"version": "[^"]*"', '"version": "{new_version}"')
+    write_file("static/manifest.json", manifest)
+
+    pkg = read_file("package.json").content
+    pkg = replace(pkg, '"version": "[^"]*"', '"version": "{new_version}"')
+    write_file("package.json", pkg)
+    print("Version bumped to {new_version}")
+
+fn get_access_token(client_id, client_secret, refresh_token):
+    resp = http_post("https://oauth2.googleapis.com/token", json={
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+    })
+    if not resp.success or resp.status_code != 200:
+        print_err("Failed to get access token:")
+        if resp.body:
+            print_err(resp.body)
+        exit(1)
+    return resp.body["access_token"]
+
+fn upload_to_cws(extension_id, access_token):
+    // Use curl for the file upload - Rad's http_put doesn't support file bodies
+    cmd = "curl -s -w '\\n%\{http_code\}' -H 'Authorization: Bearer {access_token}' -H 'x-goog-api-version: 2' -X PUT -T bastion.zip 'https://www.googleapis.com/upload/chromewebstore/v1.1/items/{extension_id}'"
+    code, stdout = quiet $`{cmd}` catch:
+        print_err("Upload request failed (exit code {code}).")
+        exit(1)
+
+    lines = stdout.trim().split("\n")
+    http_code = lines[len(lines) - 1]
+    body_str = lines[0]
+
+    if http_code != "200":
+        print_err("Upload failed (HTTP {http_code}):")
+        print_err(body_str)
+        exit(1)
+
+    result = parse_json(body_str) catch {}
+    status = result["uploadState"] ?? "UNKNOWN"
+    if status != "SUCCESS":
+        print_err("Upload returned status: {status}")
+        if result["itemError"]:
+            for err in result["itemError"]:
+                print_err("  - {err}")
+        exit(1)
+
+    print("Upload successful.")
+
+fn publish_to_cws(extension_id, access_token):
+    resp = http_post(
+        "https://www.googleapis.com/chromewebstore/v1.1/items/{extension_id}/publish",
+        headers={
+            "Authorization": "Bearer {access_token}",
+            "x-goog-api-version": "2",
+            "Content-Length": "0",
+        },
+    )
+    if not resp.success or resp.status_code != 200:
+        print_err("Publish failed:")
+        if resp.body:
+            print_err(resp.body)
+        exit(1)
+
+    status = resp.body["status"] ?? []
+    if "OK" in status:
+        print("Published successfully!")
+    else:
+        print("Publish status: {status}")
+        if resp.body["statusDetail"]:
+            for detail in resp.body["statusDetail"]:
+                print("  {detail}")

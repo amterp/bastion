@@ -93,6 +93,10 @@ sections are in `docs/index.html`:
 The site uses the Stone & Sage palette via CSS custom properties in
 `docs/style.css`.
 
+`docs/privacy.html` is the privacy policy linked from the Chrome Web
+Store listing. When changes affect what data is collected, stored, or
+how permissions are used, update the privacy policy to match.
+
 ## Tracking
 
 This project uses a [Kan](https://github.com/amterp/kan) board in `.kan/`
