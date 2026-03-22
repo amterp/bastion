@@ -1,43 +1,70 @@
-kan_schema = "board/8"
-id = "b_khQQLwX5"
+default_column = "backlog-lo"
+id = "b_kk2geoOA"
+kan_schema = "board/9"
 name = "main"
-default_column = "backlog"
-
-[[columns]]
-  name = "backlog"
-  color = "#6b7280"
-  limit = 0
-
-[[columns]]
-  name = "doing"
-  color = "#3b82f6"
-  limit = 0
-
-[[columns]]
-  name = "done"
-  color = "#f59e0b"
-  limit = 0
-  card_ids = ["a_khQzbOiK", "a_khQzZD6f", "a_khQzVsK6", "a_khQzTYzB", "a_khQzQytE", "a_khQzNLJl", "a_khQzLx2E", "a_khQzJMAD", "a_khQzHB2d", "a_khQzE7A8"]
-
-[custom_fields]
-  [custom_fields.type]
-    type = "enum"
-
-    [[custom_fields.type.options]]
-      value = "bug"
-      color = "#dc2626"
-
-    [[custom_fields.type.options]]
-      value = "enhancement"
-      color = "#2563eb"
-
-    [[custom_fields.type.options]]
-      value = "feature"
-      color = "#16a34a"
-
-    [[custom_fields.type.options]]
-      value = "chore"
-      color = "#4b5563"
 
 [card_display]
   type_indicator = "type"
+
+[[columns]]
+  color = "#6b7280"
+  description = "Low priority planned work"
+  limit = 0
+  name = "backlog-lo"
+
+[[columns]]
+  color = "#3b82f6"
+  description = "High priority planned work"
+  limit = 10
+  name = "backlog-hi"
+
+[[columns]]
+  card_ids = ["a_kk78WlgN", "a_kk8AgqgY", "a_kkC0Bw5A"]
+  color = "#f59e0b"
+  description = "Ready to be picked up next"
+  limit = 5
+  name = "next"
+
+[[columns]]
+  color = "#10b981"
+  description = "Currently being worked on"
+  limit = 5
+  name = "in-progress"
+
+[[columns]]
+  color = "#9333ea"
+  description = "Completed work"
+  limit = 0
+  name = "done"
+
+[custom_fields]
+  [custom_fields.type]
+    description = "The category of work this card represents"
+    type = "enum"
+    wanted = true
+
+    [[custom_fields.type.options]]
+      color = "#dc2626"
+      description = "A defect in existing functionality"
+      value = "bug"
+
+    [[custom_fields.type.options]]
+      color = "#2563eb"
+      description = "An improvement to existing functionality"
+      value = "enhancement"
+
+    [[custom_fields.type.options]]
+      color = "#16a34a"
+      description = "New functionality to be added"
+      value = "feature"
+
+    [[custom_fields.type.options]]
+      color = "#4b5563"
+      description = "Maintenance, refactoring, or housekeeping"
+      value = "chore"
+
+[[pattern_hooks]]
+  command = ".kan/hooks/type-shortcut.rad"
+  name = "type-shortcut"
+  pattern_title = "![a-zA-Z]+"
+  timeout = 0

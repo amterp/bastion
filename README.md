@@ -104,3 +104,9 @@ static/             manifest.json, icons (copied to dist/)
 ## Status
 
 Early development. Core functionality works. Not yet published to any extension store.
+
+## Project tracking
+
+This project uses [Kan](https://github.com/amterp/kan), a file-based
+kanban board CLI. The board lives in `.kan/` and tracks development work.
+Run `kan list` to see current status or `kan serve` to open the web UI.

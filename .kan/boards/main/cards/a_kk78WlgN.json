@@ -1,0 +1,11 @@
+{
+  "_v": 1,
+  "alias": "make-config-files",
+  "alias_explicit": false,
+  "created_at_millis": 1774132619806,
+  "creator": "Alexander Terp",
+  "id": "a_kk78WlgN",
+  "title": "make config files shareable, maybe syncable?",
+  "type": "feature",
+  "updated_at_millis": 1774132672949
+}

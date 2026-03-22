@@ -77,5 +77,8 @@ No runtime dependencies. No UI framework.
 
 ## Tracking
 
-Kan board in `.kan/` tracks implementation phases. Use `kan list` to see
-status.
+This project uses a [Kan](https://github.com/amterp/kan) board in `.kan/`
+to track development work. Keep the board up to date as you work - when
+picking up, completing, or creating tasks, use the `kan` CLI to reflect
+that (e.g. `kan add`, `kan edit <id> -c in-progress`, `kan list`). Run
+`kan board describe` to see the board's columns, fields, and conventions.
