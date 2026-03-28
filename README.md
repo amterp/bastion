@@ -4,6 +4,8 @@
 
 # Bastion
 
+**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/bastion/dnnoomjjbcdimaagnjlpnbajeamlcnnl)**
+
 A Chromium browser extension that helps you stay focused and break bad browsing habits - like checking Reddit every five minutes - through graduated friction rather than hard blocking.
 
 ## Philosophy

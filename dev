@@ -27,12 +27,23 @@ command zip:
     ---
     calls do_zip
 
+command site:
+    ---
+    Serve the docs website locally.
+    ---
+    port int = 8080  # Port to serve on
+    calls do_site
+
 command release:
     ---
     Build, test, and publish a new version to the Chrome Web Store.
     ---
     version str  # Version to release (e.g. 1.0.0)
     calls do_release
+
+fn do_site():
+    print("Serving docs at http://localhost:{port}")
+    $`python3 -m http.server {port} -d docs`
 
 fn do_build():
     print("Building...")
