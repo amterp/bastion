@@ -1,0 +1,11 @@
+{
+  "_v": 1,
+  "alias": "dont-count-nav-freq",
+  "alias_explicit": false,
+  "created_at_millis": 1774213495728,
+  "creator": "Alexander Terp",
+  "id": "a_lI35Y8qN",
+  "title": "dont count nav freq from regular browsing",
+  "type": "bug",
+  "updated_at_millis": 1774215548032
+}
